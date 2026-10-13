@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>이야기 엮기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a classroom workbench — step rail on top, the student's work on the left, the AI helper on the right, the finished book as the last step. */
+:root{
+  --bg:#f2f4f7; --surface:#ffffff; --sunk:#e9edf2; --line:#d6dce5;
+  --ink:#1c2331; --muted:#5d6676;
+  --accent:#2f4f9e; --accent-soft:#e2e8f6;
+  --mine:#a8530f; --mine-soft:#f7eadb;
+  --ai:#674a9c; --ai-soft:#eee8f7;
+  --ok:#2b7650; --ok-soft:#e0f0e7; --warn:#9a6a00; --warn-soft:#f8efd3;
+  --display:"Gowun Batang","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141820; --surface:#1c212b; --sunk:#252b37; --line:#353d4c; --ink:#e8ebf1; --muted:#a0a8b7;
+  --accent:#93acec; --accent-soft:#25304a; --mine:#e8a865; --mine-soft:#3a2b1b;
+  --ai:#c2a8ef; --ai-soft:#2e2541; --ok:#7fd0a3; --ok-soft:#1c3328; --warn:#e7c25e; --warn-soft:#3a3016; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141820; --surface:#1c212b; --sunk:#252b37; --line:#353d4c; --ink:#e8ebf1; --muted:#a0a8b7;
+  --accent:#93acec; --accent-soft:#25304a; --mine:#e8a865; --mine-soft:#3a2b1b;
+  --ai:#c2a8ef; --ai-soft:#2e2541; --ok:#7fd0a3; --ok-soft:#1c3328; --warn:#e7c25e; --warn-soft:#3a3016; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:18px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+button,select,input,textarea{font:inherit;color:var(--ink)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between}
+.brand small{display:block;font-size:12.5px;color:var(--accent);font-weight:600;letter-spacing:.04em}
+.brand h1{margin:2px 0 0;font-family:var(--display);font-size:clamp(26px,4vw,34px);font-weight:700;text-wrap:balance}
+.brand p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.sample{font-size:12.5px;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:7px 11px;max-width:420px}
+
+/* step rail */
+.rail{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.rail ol{display:flex;margin:0;padding:6px;list-style:none;gap:4px;min-width:max-content}
+.rail button{display:flex;align-items:center;gap:8px;border:0;background:none;border-radius:8px;padding:8px 12px;color:var(--muted);white-space:nowrap}
+.rail button b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--sunk);font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.rail button[aria-current="step"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.rail button[aria-current="step"] b{background:var(--accent);color:var(--surface)}
+
+/* work area */
+.work{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:920px){.work{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.ph{padding:14px 18px 10px;border-bottom:1px solid var(--line);display:grid;gap:2px}
+.ph h2{margin:0;font-size:17px;font-weight:700}
+.ph p{margin:0;color:var(--muted);font-size:13.5px}
+.pb{padding:16px 18px;display:grid;gap:14px;min-width:0}
+.nav{display:flex;justify-content:space-between;gap:8px;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.sm{font-size:12.5px;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:3px 9px}
+.label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+
+/* step 1: shelf */
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px}
+.book{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);text-align:left;display:grid;gap:4px}
+.book[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.book b{font-family:var(--display);font-size:16.5px}
+.book span{font-size:12.5px;color:var(--muted)}
+.scene h3{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:600}
+.sent{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:start;padding:6px 8px;border-radius:8px}
+.sent:hover{background:var(--sunk)}
+.sent.in{background:var(--ok-soft)}
+.code{font-size:11.5px;color:var(--muted);padding-top:3px;font-variant-numeric:tabular-nums}
+.st{font-family:var(--display);font-size:16px;line-height:1.6}
+.acts{display:flex;gap:4px}
+
+/* chat */
+.chat{display:grid;gap:10px;max-height:460px;overflow:auto;padding:14px 16px}
+.msg{display:grid;gap:3px;max-width:92%}
+.msg .who{font-size:11.5px;color:var(--muted)}
+.msg .bub{padding:9px 12px;border-radius:13px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px}
+.msg.ai .bub{background:var(--ai-soft);border-top-left-radius:4px}
+.msg.me{justify-self:end}
+.msg.me .who{text-align:right}
+.msg.me .bub{background:var(--accent);color:var(--surface);border-top-right-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px}
+.chip{font-size:13px;border:1px solid var(--ai);color:var(--ai);background:var(--surface);border-radius:999px;padding:4px 11px}
+.chatnote{margin:0;padding:0 16px 14px;font-size:12.5px;color:var(--muted)}
+
+/* forms */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.field{display:grid;gap:5px}
+select,input[type=text],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:46px;font-family:var(--display);font-size:15.5px}
+.reader{border:1px dashed var(--line);border-radius:12px;padding:14px;display:grid;gap:6px;background:var(--sunk)}
+.reader b{font-family:var(--display);font-size:17px}
+
+/* formats */
+.formats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.fmt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);text-align:left;display:grid;gap:6px}
+.fmt[aria-pressed="true"]{border-color:var(--ai);background:var(--ai-soft)}
+.fmt b{font-size:15px}
+.fmt small{color:var(--muted);font-size:12.5px}
+.fmt .eg{font-family:var(--display);font-size:14px;border-left:3px solid var(--line);padding-left:8px}
+
+/* story items */
+.items{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;background:var(--surface)}
+.item .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between}
+.tag{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.k-orig{background:var(--sunk);color:var(--muted)}
+.k-edit{background:var(--mine-soft);color:var(--mine)}
+.k-aiedit{background:var(--mine-soft);color:var(--mine);box-shadow:inset 0 0 0 1px var(--ai)}
+.k-aiasis{background:var(--ai-soft);color:var(--ai)}
+.k-new{background:var(--mine);color:var(--surface)}
+.hard{background:var(--warn-soft);color:var(--warn);border-radius:3px;padding:0 2px}
+.orig{font-size:12.5px;color:var(--muted)}
+.opts{display:grid;gap:6px}
+.opt{text-align:left;border:1px solid var(--ai);background:var(--ai-soft);border-radius:8px;padding:7px 10px;font-family:var(--display);font-size:15px}
+.opt[aria-pressed="true"]{outline:2px solid var(--ai)}
+.why{font-size:12.5px;color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+
+/* vocab, quiz */
+.vocab{display:grid;gap:8px}
+.voc{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr);gap:6px 12px;align-items:center}
+@media (max-width:560px){.voc{grid-template-columns:minmax(0,1fr)}}
+.voc .w{font-family:var(--display);font-size:18px;font-weight:700}
+.voc .vi{font-size:12.5px;color:var(--muted)}
+.voc label{display:flex;gap:6px;align-items:center;font-size:13px}
+.voc.unchecked{border-color:var(--warn);background:var(--warn-soft)}
+.q{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.q b{font-family:var(--display);font-size:15.5px}
+.q ol{margin:0;padding-left:20px;font-size:14px}
+.q .ans{color:var(--ok);font-weight:600}
+
+/* voices */
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+@media (max-width:640px){.vrow{grid-template-columns:minmax(0,1fr)}}
+.vrow .st{font-size:15px}
+.vsel{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:4px 10px;font-size:12.5px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.vsel select{width:auto;padding:4px 8px;font-size:12.5px}
+.rec{font-size:12.5px;border:1px solid var(--mine);color:var(--mine);background:var(--surface);border-radius:7px;padding:3px 9px}
+.rec.done{background:var(--mine-soft)}
+
+/* book */
+.bookpage{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 4px;box-shadow:6px 6px 0 -2px var(--sunk);padding:clamp(18px,4vw,40px);display:grid;gap:14px;max-width:720px;width:100%;margin:0 auto}
+.bookpage .for{font-size:12.5px;color:var(--accent);font-weight:600;text-align:center}
+.bookpage h3{margin:0;text-align:center;font-family:var(--display);font-size:clamp(24px,3.6vw,30px)}
+.bookpage .src{text-align:center;color:var(--muted);font-size:13px;margin:0}
+.bookpage .text{font-family:var(--display);font-size:17.5px;line-height:2;margin:0}
+.bookpage .text span{border-radius:3px}
+.bookpage .text sup{font-family:var(--body);font-size:10px;color:var(--muted);margin-left:1px}
+.t-edit,.t-aiedit,.t-aiasis,.t-new{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.t-edit,.t-aiedit,.t-new{text-decoration-color:var(--mine)}
+.t-aiasis{text-decoration-color:var(--ai);text-decoration-style:dashed}
+.t-playing{background:var(--accent-soft)}
+.section h4{margin:0 0 6px;font-size:14px}
+.minitable{width:100%;border-collapse:collapse;font-size:13.5px}
+.minitable td,.minitable th{border-top:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
+.minitable th{font-size:12px;color:var(--muted);font-weight:600}
+.tw{overflow-x:auto}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,108px),1fr));gap:8px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-size:21px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+.report{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px;background:var(--sunk)}
+.foot{font-size:12.5px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:no-preference){.msg{animation:in .2s ease-out}@keyframes in{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <small>낭독도서관 × AI</small>
+      <h1>이야기 엮기</h1>
+      <p>낭독도서관의 이야기로 외국인 친구를 위한 한국어 이야기책을 만들어요.</p>
+    </div>
+    <div class="sample">시연용 샘플입니다. AI 도우미의 대답은 미리 정해 둔 예시이고, 소리는 기기에 들어 있는 음성으로 들려줍니다.</div>
+  </header>
+
+  <nav class="rail" aria-label="만들기 단계"><ol id="rail"></ol></nav>
+
+  <div class="work">
+    <section class="panel" aria-labelledby="stepH">
+      <div class="ph"><h2 id="stepH"></h2><p id="stepP"></p></div>
+      <div class="pb" id="stepBody"></div>
+      <div class="nav"><button class="btn" id="prev" type="button">이전 단계</button><button class="btn primary" id="next" type="button">다음 단계</button></div>
+    </section>
+    <aside class="panel" aria-labelledby="aiH">
+      <div class="ph"><h2 id="aiH">AI 도우미</h2><p>함께 의논하지만, 고르고 정하는 건 내가 해요.</p></div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <p class="chatnote">샘플에서는 아래 버튼으로만 물어볼 수 있어요.</p>
+    </aside>
+  </div>
+  <p class="foot">오디오펍 · 낭독도서관 AI 활용교육 샘플 · 원작은 모두 저작권이 만료된 작품입니다.</p>
+</div>
+
+<script>
+(() => {
+/* ---------------- data ---------------- */
+const BOOKS = [
+  {id:'ga', code:'가', title:'의좋은 형제', origin:'한국 전래동화', scenes:[
+    {t:'가을 수확과 걱정', s:[[6,'가을이 되자 곡식이 잘 익었어요.'],[7,'두 형제의 곳간에는 곡식 자루가 차곡차곡 쌓였지요.'],[8,'사람들이 보기엔 둘 다 넉넉해 보였어요.'],[9,'하지만 밤이 되면 형과 아우는 똑같은 생각을 했답니다.'],[10,'‘우리 형제는 괜찮을까?’'],[11,'‘혹시 부족하진 않을까?’']]},
+    {t:'들판에서 마주치다', s:[[24,'들판 가운데, 달빛이 환하게 비추는 길에서 두 형제는 딱 마주쳤어요.'],[25,'처음에는 서로 깜짝 놀랐지요.'],[26,'그런데 둘 다 어깨에 곡식 자루를 메고 있는 걸 보고 더 놀랐어요.'],[28,'“아우야, 이 밤에 어디 가는 길이니?”'],[30,'“형님 댁에 곡식을 가져다드리려고 했어요.”'],[32,'“나는 아우에게 가져다주려던 길이었는데.”']]},
+    {t:'서로 안아 주다', s:[[33,'두 형제는 잠시 말이 없었어요.'],[34,'그리고 곡식 자루를 내려놓고 서로를 꼭 안았답니다.'],[36,'하지만 두 형제의 마음은 서로에게 더 가까워졌지요.'],[40,'나눔은 곡식만이 아니라, 마음도 함께 나누는 거라고요.']]}
+  ]},
+  {id:'da', code:'다', title:'돌로 만든 수프', origin:'유럽 민담', scenes:[
+    {t:'거절당한 여행자들', s:[[6,'어느 날 저녁, 해가 낮게 지고 그림자가 길게 드리워질 때 세 명의 여행자가 나타났습니다.'],[8,'여행자들은 집집마다 찾아갔습니다.'],[10,'"안녕하세요. 먼 길을 왔습니다. 음식을 조금 나눠 주실 수 있나요?"'],[11,'모든 집에서는 같은 대답이 돌아왔습니다.'],[12,'"나눠 줄 게 없어요."'],[14,'"가진 것이 얼마 없어서 아껴야 해요."']]},
+    {t:'돌 수프를 끓이다', s:[[15,'여행자들은 마을 한가운데 서서 생각에 잠겼습니다.'],[16,'마침내 한 사람이 미소를 지으며 말했습니다.'],[17,'"나눌 음식이 없다면, 우리가 돌 수프를 만들어 봅시다!"']]},
+    {t:'하나씩 모이는 재료', s:[[44,'"우리 집에 양파가 하나 있어요."'],[47,'"우리 집에는 감자가 한두 개 있어요."'],[49,'하나씩 추가될 때마다 수프는 더욱 풍성해졌고, 모인 사람들도 늘어났습니다.'],[50,'웃음소리가 속삭임을 대신했습니다.']]},
+    {t:'함께 먹는 밤과 돌의 비밀', s:[[61,'오랜만에 먹어본 가장 맛있는 수프였습니다.'],[62,'돌 때문이 아니라, 함께 만들었기 때문입니다.'],[65,'여러 계절 만에 처음으로 아무도 혼자 먹지 않았습니다.'],[74,'"중요한 것은, 우리가 가진 것을 나눌 때 충분해진다는 것을 기억하는 겁니다."']]}
+  ]},
+  {id:'cha', code:'차', title:'세 가지 질문', origin:'레프 톨스토이', scenes:[
+    {t:'잠 못 드는 왕', s:[[1,'고요한 밤이었습니다.'],[5,'왕이 긴 복도를 천천히 걸었습니다.'],[14,'"가장 중요한 때는 언제인가?"'],[16,'"가장 중요한 사람은 누구인가?"']]},
+    {t:'은자의 대답', s:[[138,'"지금 이 순간입니다. 언제나."'],[139,'"가장 중요한 사람은 지금 내 앞에 있는 사람입니다."']]}
+  ]},
+  {id:'sa', code:'사', title:'아난시 이야기', origin:'서아프리카 민담', scenes:[
+    {t:'이야기가 없는 세상', s:[[1,'아주 오래전, 이야기가 아직 사람들 사이에 퍼지지 않았던 시절의 일입니다.'],[2,'세상의 모든 이야기는 하늘 위에 있었어요.'],[8,'이야기가 없는 세상에서 사람들은 작고 외로웠습니다.'],[9,'그 세상에 거미 아난시가 살고 있었습니다.']]}
+  ]}
+];
+const B = Object.fromEntries(BOOKS.map(b => [b.id, b]));
+const ORIG = {}; BOOKS.forEach(b => b.scenes.forEach(sc => sc.s.forEach(([n, t]) => ORIG[b.id + '-' + n] = t)));
+const code = (b, n) => B[b].code + '-' + String(n).padStart(3, '0');
+
+/* words a beginner may find hard, and AI revision options (scripted) */
+const HARD = {'ga-7':['곳간','차곡차곡'],'ga-8':['넉넉해'],'ga-9':['아우','답니다'],'ga-34':['자루','답니다'],'da-6':['드리워질'],'da-11':['돌아왔습니다'],'da-17':['없다면'],'da-49':['추가될','풍성해졌고'],'da-50':['속삭임','대신했습니다'],'da-74':['충분해진다는'],'ga-36':['가까워졌지요'],'ga-40':['나눔은']};
+const AIOPT = {
+  'ga-9':{why:'"아우"는 요즘 잘 쓰지 않는 말이고, "-답니다"는 초급 학습자에게 낯설어요.', o:['하지만 밤마다 형과 동생은 같은 생각을 했어요.','하지만 밤이 되면 형과 동생은 똑같이 걱정했어요.']},
+  'da-11':{why:'"대답이 돌아왔습니다"는 비유가 들어간 표현이에요. 말투도 "-어요"로 맞춰요.', o:['집집마다 같은 대답을 했어요.','모든 집에서 똑같이 대답했어요.']},
+  'da-17':{why:'"-다면"은 중급 문법이에요.', o:['"음식이 없으면, 우리가 돌 수프를 만들어요!"','"나눌 음식이 없어요? 그럼 돌 수프를 만들어요!"']},
+  'da-49':{why:'한 문장이 길고 "추가되다", "풍성하다"가 어려워요. 두 문장으로 나눠 볼까요?','o':['사람들이 재료를 하나씩 가져왔어요. 수프는 점점 맛있어졌어요.','재료가 하나씩 들어갔어요. 사람들도 점점 많이 모였어요.']},
+  'ga-34':{why:'"자루"는 초급 학습자가 모를 수 있어요. 꼭 필요한 말인지 생각해 봐요.', o:['두 사람은 서로를 꼭 안았어요.','형제는 곡식을 내려놓고 서로 꼭 안았어요.']},
+  'da-74':{why:'문장이 길고 "충분해지다"가 어려워요. 이야기의 마지막 말이니 짧고 기억하기 쉽게 만들면 좋아요.', o:['"우리가 가진 것을 나누면 충분해요."','"나누면 모두에게 충분해요."']}
+};
+
+/* example story (state at rest) */
+const EXAMPLE_ITEMS = [
+  {k:'x', id:'ga-6'},
+  {k:'x', id:'ga-9', ai:'하지만 밤마다 형과 동생은 같은 생각을 했어요.', t:'하지만 밤마다 형과 동생은 서로를 걱정했어요.'},
+  {k:'x', id:'ga-10'},
+  {k:'m', t:'같은 밤, 다른 마을에 배고픈 여행자 세 사람이 왔어요.'},
+  {k:'x', id:'da-11', ai:'집집마다 같은 대답을 했어요.', t:'집집마다 같은 대답을 했어요.'},
+  {k:'x', id:'da-12'},
+  {k:'x', id:'da-17', t:'"음식이 없으면, 우리가 돌 수프를 만들어요!"'},
+  {k:'x', id:'da-49', ai:'사람들이 재료를 하나씩 가져왔어요. 수프는 점점 맛있어졌어요.', t:'사람들이 감자와 양파를 하나씩 가져왔어요. 수프는 점점 맛있어졌어요.'},
+  {k:'m', t:'형제도, 마을 사람들도 그날 밤 같은 것을 알았어요.'},
+  {k:'x', id:'ga-34'},
+  {k:'x', id:'da-74', ai:'"우리가 가진 것을 나누면 충분해요."', t:'"우리가 가진 것을 나누면 충분해요."'}
+];
+
+const STEPS = [
+  {k:'pick', n:'듣고 고르기', h:'1. 듣고 고르기', p:'서가에서 이야기를 듣고, 내 책에 넣고 싶은 문장을 골라요.'},
+  {k:'reader', n:'독자 정하기', h:'2. 독자 정하기', p:'이 책을 읽을 외국인 친구를 정해요. 이후 모든 판단의 기준이 돼요.'},
+  {k:'format', n:'형식 정하기', h:'3. 형식 정하기', p:'AI와 의논해서 책을 어떤 방식으로 보여 줄지 정해요.'},
+  {k:'edit', n:'고쳐 쓰기', h:'4. 고쳐 쓰기', p:'친구가 이해할 수 있게 문장을 고치고, 이어 주는 문장은 직접 써요.'},
+  {k:'vocab', n:'설명·질문', h:'5. 단어 설명과 확인 질문', p:'친구가 어려워할 단어를 설명하고, 이해를 돕는 질문을 만들어요.'},
+  {k:'voice', n:'목소리', h:'6. 목소리 정하기', p:'문장마다 성우 낭독, 내 목소리, AI 목소리 중 하나를 골라요.'},
+  {k:'book', n:'완성', h:'7. 완성된 책', p:'외국인 친구가 읽고 듣는 화면이에요. 반 친구들과 서로 들어 봐요.'}
+];
+
+const VOCAB = [
+  {w:'곡식', easy:'쌀, 보리처럼 먹는 곡물이에요.', vi:'ngũ cốc', ok:true},
+  {w:'형', easy:'남자가 나이 많은 남자 형제를 부르는 말이에요.', vi:'anh trai', ok:true},
+  {w:'동생', easy:'나보다 나이 어린 형제예요.', vi:'em', ok:true},
+  {w:'여행자', easy:'여행하는 사람이에요.', vi:'du khách', ok:true},
+  {w:'나누다', easy:'내 것을 다른 사람과 함께 가지는 거예요.', vi:'chia sẻ', ok:true},
+  {w:'충분하다', easy:'모자라지 않아요. 넉넉해요.', vi:'đủ', ok:false}
+];
+const CULTURE = {t:'"형"과 "오빠"', d:'한국에서는 남자 동생이 나이 많은 남자 형제를 "형", 여자 동생은 "오빠"라고 불러요. 드라마에서 자주 듣는 "오빠"와 같은 가족 호칭이에요.'};
+const QUIZ = [
+  {q:'형과 동생은 밤마다 무엇을 했어요?', o:['서로를 걱정했어요.','곡식을 팔았어요.','여행을 떠났어요.'], a:0, src:'AI 초안을 고침'},
+  {q:'여행자들은 처음에 무엇으로 수프를 만들었어요?', o:['감자','돌','양배추'], a:1, src:'AI 초안 그대로 · 확인함'},
+  {q:'이 이야기에서 배운 말은 무엇이에요?', o:['나누면 충분해요.','혼자 먹으면 맛있어요.','돌은 특별해요.'], a:0, src:'직접 만듦'}
+];
+const AIV = {story:{n:'이야기꾼', pitch:.9}, woman:{n:'젊은 여성', pitch:1.12}, child:{n:'아이 느낌', pitch:1.35}};
+
+/* ---------------- state ---------------- */
+const state = {
+  step: 0, book: 'ga',
+  items: EXAMPLE_ITEMS.map(x => ({...x})),
+  reader: {country:'베트남', level:'beginner', like:'한국 드라마', name:'린'},
+  format: 'mix', title: '나누면 충분해요',
+  open: {}, vocab: VOCAB.map(v => ({...v})),
+  chat: {}
+};
+// default voices
+state.items.forEach((it, i) => { it.v = {type: kind(it) === 'orig' ? 'narr' : (i % 3 === 0 ? 'me' : 'ai'), ai:'story', speed:'slow', rec: true}; });
+state.items[3].v = {type:'me', ai:'story', speed:'normal', rec:true};
+state.items[8].v = {type:'me', ai:'story', speed:'normal', rec:false};
+
+function text(it){ return it.k === 'm' ? it.t : (it.t != null ? it.t : ORIG[it.id]); }
+function kind(it){
+  if (it.k === 'm') return 'new';
+  const t = text(it).trim();
+  if (t === ORIG[it.id].trim()) return 'orig';
+  if (it.ai && t === it.ai.trim()) return 'aiasis';
+  if (it.ai) return 'aiedit';
+  return 'edit';
+}
+const KLABEL = {orig:'원문 그대로', edit:'원문을 고침', aiedit:'AI 제안을 고침', aiasis:'AI 제안 그대로 · 확인 필요', new:'직접 쓴 문장'};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+
+/* ---------------- speech (preview only) ---------------- */
+let queue = [], playingIdx = -1;
+function speak(t, {rate = 1, pitch = 1, onend} = {}){
+  try{
+    if (!('speechSynthesis' in window)) throw 0;
+    const u = new SpeechSynthesisUtterance(t.replace(/[“”"‘’']/g, ''));
+    u.lang = 'ko-KR'; u.rate = rate; u.pitch = pitch;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
+    if (v) u.voice = v;
+    if (onend) u.onend = onend;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){ flash('이 기기에서는 미리 듣기 음성을 쓸 수 없어요.'); return false; }
+}
+function stopAll(){ try{ speechSynthesis.cancel(); }catch(e){} queue = []; playingIdx = -1; document.querySelectorAll('.t-playing').forEach(e => e.classList.remove('t-playing')); }
+function voiceParams(it){
+  const v = it.v || {type:'narr'};
+  if (v.type === 'ai') return {rate: v.speed === 'slow' ? .72 : 1, pitch: AIV[v.ai].pitch};
+  if (v.type === 'me') return {rate: .95, pitch: 1.2};
+  return {rate: .92, pitch: 1};
+}
+function flash(msg){ addAI(msg); }
+
+/* ---------------- chat scripts ---------------- */
+const SCRIPT = {
+  pick: {
+    start:[
+      ['me','서로 돕는 이야기를 만들고 싶어.'],
+      ['ai','좋아! 돕는 장면이 나오는 이야기가 여럿 있어. 「의좋은 형제」는 가족끼리, 「돌로 만든 수프」는 처음 보는 사람들끼리 돕는 이야기야. 둘 다 들어 보고 마음에 드는 문장을 골라 봐.']
+    ],
+    chips:{
+      '외국인 친구가 좋아할 이야기는?':'외국인 친구에게는 그 나라에도 비슷한 이야기가 있는 작품이 좋아. 「돌로 만든 수프」는 여러 나라에 비슷한 민담이 있고, 「의좋은 형제」는 한국 가족 문화를 보여 줄 수 있어.',
+      '짧은 장면을 찾아 줘':'「의좋은 형제」의 "가을 수확과 걱정" 장면이 6문장으로 짧아. 문장도 대부분 "-어요"로 끝나서 쉽게 고칠 수 있어.',
+      '문장을 몇 개쯤 고르면 돼?':'처음 책이라면 10~15문장이면 충분해. 나중에 고쳐 쓰고 이어 주는 문장을 넣으면 조금 더 길어져.'
+    }
+  },
+  reader: {
+    start:[
+      ['ai','이 책은 누가 읽을까? 친구의 나라와 한국어 수준을 정하면, 어떤 단어를 고칠지 내가 같이 찾아 줄게.'],
+      ['me','베트남 친구 린이야. 한국어는 이제 막 배우기 시작했고, 한국 드라마를 좋아해.'],
+      ['ai','그럼 초급(TOPIK 1~2급)으로 보면 돼. 초급 친구에게는 문장을 짧게, 끝맺음은 "-어요"로, 어려운 한자말은 쉬운 말로 바꾸는 게 좋아. 드라마를 좋아하니 "형", "오빠" 같은 호칭을 설명해 주면 반가워할 거야.']
+    ],
+    chips:{
+      '초급과 중급은 뭐가 달라?':'초급은 짧은 문장과 생활 단어를 주로 알아. 중급은 "-다면", "-는데도" 같은 연결 표현과 조금 긴 문장도 이해할 수 있어. 친구 수준에 맞추면 고쳐 쓸 곳이 달라져.',
+      '친구 나라 말도 넣을 수 있어?':'단어 설명에 베트남어 뜻을 같이 적어 줄 수 있어. 다만 내가 찾은 뜻이 틀릴 수 있으니까, 사전이나 선생님과 꼭 확인해 줘.',
+      '친구가 실제로 읽을 수 있어?':'우리 학교나 교류 학교에 외국인 친구가 있다면 완성한 책을 보내 볼 수 있어. 선생님께 여쭤봐.'
+    }
+  },
+  format: {
+    start:[
+      ['ai','책을 어떤 방식으로 보여 줄지 정해 보자. 네가 고른 문장을 보니 「의좋은 형제」와 「돌로 만든 수프」가 섞여 있어. 네 가지 형식을 골라 왔어. 장단점을 보고 정해 줘.'],
+      ['me','두 이야기를 섞는 게 재밌을 것 같아.'],
+      ['ai','좋아. 그럼 두 이야기가 어떻게 만나게 할지 네가 정해야 해. 같은 밤에 일어난 일로 할까, 아니면 다른 방법이 있을까? 이어 주는 문장은 네가 직접 써.']
+    ],
+    chips:{
+      '같은 밤으로 할래':'좋아! 그럼 「의좋은 형제」의 가을밤 다음에 "같은 밤, 다른 마을에서…" 같은 문장이 필요해. 문장은 4단계에서 직접 써 봐.',
+      '형식을 두 개 섞어도 돼?':'돼. 예를 들어 "두 이야기 섞기"에 "친구가 묻는 형식"을 더해서 장면마다 린이 물어볼 만한 질문을 하나씩 넣을 수 있어. 다만 처음에는 하나만 정하는 게 끝까지 완성하기 쉬워.',
+      '내가 새 형식을 만들어도 돼?':'물론이야. 어떤 방식인지 말해 주면 그 형식에 맞게 장면 배치를 같이 생각해 볼게.'
+    }
+  },
+  edit: {
+    start:[
+      ['ai','린은 초급이니까, 어려운 단어와 긴 문장에 노란 표시를 해 뒀어. "AI 수정안 보기"를 누르면 원문을 살린 수정안을 보여 줄게. 그대로 쓰기보다 네 말로 한 번 더 고쳐 봐.'],
+      ['me','「돌로 만든 수프」는 "-습니다"로 끝나서 말투가 달라.'],
+      ['ai','맞아. 린에게는 "-어요"가 더 익숙하니까 그쪽으로 맞추는 게 좋겠어. 고친 문장은 성우 낭독 대신 네 목소리나 AI 목소리로 녹음하게 돼.']
+    ],
+    chips:{
+      '이어지는 게 어색한 곳을 찾아 줘':'4번 문장 앞이 갑자기 다른 마을로 바뀌어. 네가 쓴 "같은 밤, 다른 마을에…" 문장이 그 역할을 잘하고 있어. 9번 문장 뒤에서 다시 형제 이야기로 돌아갈 때도 연결이 자연스러운지 읽어 봐.',
+      '제목을 같이 정해 줘':'제목은 네가 정해. 대신 질문 하나만 할게. 린이 책을 다 읽고 기억했으면 하는 한 문장이 뭐야? 그 말이 제목이 될 수도 있어.',
+      'AI 제안을 그대로 써도 돼?':'써도 돼. 다만 그대로 쓴 문장은 "확인 필요"로 표시돼. 소리 내어 읽어 보고, 원문의 뜻이 남아 있는지 확인한 다음 표시를 지워 줘.'
+    }
+  },
+  vocab: {
+    start:[
+      ['ai','네 이야기에서 린이 어려워할 단어 후보를 골랐어. 쉬운 설명과 베트남어 뜻은 내가 초안을 썼는데 틀릴 수 있어. 하나씩 확인하고 "확인했어요"에 표시해 줘.'],
+      ['me','"충분하다" 설명이 좀 어려운 것 같아.'],
+      ['ai','"넉넉해요"는 린에게 또 모르는 단어일 수 있어. 예문으로 설명해 보면 어때? 어떻게 바꿀지는 네가 정해.']
+    ],
+    chips:{
+      '확인 질문을 더 만들어 줘':'질문 초안을 하나 더 줄게. "여행자들은 마을에 왜 왔어요?" 정답과 틀린 보기는 네가 만들어 봐.',
+      '문화 설명도 필요해?':'린은 드라마를 좋아하니까 "형"과 "오빠" 설명이 도움이 될 거야. 하나 더 넣는다면 "수프"는 한국에서는 국이나 찌개와 비슷하다는 설명도 좋아.',
+      '베트남어 뜻이 맞는지 어떻게 알아?':'사전에서 찾아보거나, 학교에 베트남어를 아는 친구나 선생님이 있으면 물어보는 게 가장 정확해.'
+    }
+  },
+  voice: {
+    start:[
+      ['ai','원문 그대로인 문장은 성우 낭독을 쓸 수 있어. 고치거나 새로 쓴 문장은 네 목소리나 AI 목소리로 골라 줘. 린은 초급이니까 AI 목소리는 "느리게"를 추천해.'],
+      ['me','내가 쓴 문장은 내 목소리로 녹음할래.'],
+      ['ai','좋아! 녹음한 다음 한 번 들어 보고, 받침 있는 말이 또렷하게 들리는지 확인해 줘. AI 목소리도 발음이 틀릴 수 있으니까 꼭 들어 봐.']
+    ],
+    chips:{
+      '성우 목소리는 왜 못 바꿔?':'성우 낭독은 원문 그대로 녹음된 거라서, 문장을 고치면 맞지 않아. 고친 문장은 새로 녹음해야 해.',
+      'AI 목소리는 몇 개야?':'이야기꾼, 젊은 여성, 아이 느낌 세 가지야. 인물마다 다른 목소리를 쓰면 대화가 더 잘 구분돼.',
+      'AI 목소리라고 표시돼?':'응. 완성된 책에 어떤 문장이 AI 목소리인지 표시돼. 듣는 사람이 알 수 있게 하는 게 약속이야.'
+    }
+  },
+  book: {
+    start:[
+      ['ai','책이 완성됐어! "전체 듣기"로 처음부터 들어 봐. 린의 입장에서 이해하기 어려운 곳이 있는지 마지막으로 확인해 줘.'],
+      ['me','"확인 필요" 표시가 하나 남았어.'],
+      ['ai','"우리가 가진 것을 나누면 충분해요." 문장이야. 이 문장을 그대로 쓸지, 네 말로 바꿀지 정하면 돼. 단어장의 "충분하다" 설명도 아직 확인 전이야.']
+    ],
+    chips:{
+      '린이 이해하기 어려운 곳은?':'"차곡차곡"이나 "자루" 같은 말은 고쳤으니 괜찮아. 남은 건 "충분하다" 정도야. 단어장 설명을 확인하면 돼.',
+      '발표할 때 뭘 말하면 좋아?':'왜 이 두 이야기를 골랐는지, 무엇을 왜 고쳤는지 하나씩 말해 보면 좋아. 제작 기록에 다 남아 있어.'
+    }
+  }
+};
+function chatFor(k){
+  if (!state.chat[k]) state.chat[k] = SCRIPT[k].start.map(([r, t]) => ({r, t}));
+  return state.chat[k];
+}
+function addAI(t){ const k = STEPS[state.step].k; chatFor(k).push({r:'ai', t}); renderChat(); }
+
+/* ---------------- renderers ---------------- */
+function renderRail(){
+  $('rail').innerHTML = STEPS.map((s, i) =>
+    `<li><button type="button" data-go="${i}" ${i === state.step ? 'aria-current="step"' : ''}><b>${i + 1}</b>${s.n}</button></li>`).join('');
+}
+function renderChat(){
+  const k = STEPS[state.step].k;
+  $('chat').innerHTML = chatFor(k).map(m =>
+    `<div class="msg ${m.r}"><span class="who">${m.r === 'ai' ? 'AI 도우미' : '나'}</span><div class="bub">${esc(m.t)}</div></div>`).join('');
+  $('chat').scrollTop = $('chat').scrollHeight;
+  const used = new Set(chatFor(k).filter(m => m.r === 'me').map(m => m.t));
+  $('chips').innerHTML = Object.keys(SCRIPT[k].chips).filter(q => !used.has(q)).map(q =>
+    `<button class="chip" type="button" data-ask="${esc(q)}">${esc(q)}</button>`).join('');
+}
+function inStory(id){ return state.items.some(it => it.id === id); }
+function hl(t, id){
+  let s = esc(t);
+  (HARD[id] || []).forEach(w => { s = s.split(esc(w)).join(`<mark class="hard">${esc(w)}</mark>`); });
+  return s;
+}
+
+const R = {
+  pick(){
+    const b = B[state.book];
+    return `
+      <div class="shelf" role="group" aria-label="서가">${BOOKS.map(x => `
+        <button class="book" type="button" data-book="${x.id}" aria-pressed="${x.id === state.book}">
+          <b>${x.title}</b><span>${x.origin} · 저작권 만료 · 성우 낭독</span></button>`).join('')}</div>
+      <div class="label">작품 기호 ${b.code} · 「${b.title}」 · 문장을 눌러 들어 보고, ＋로 내 책에 담아요</div>
+      ${b.scenes.map(sc => `<div class="scene"><h3>${sc.t}</h3>${sc.s.map(([n, t]) => {
+        const id = b.id + '-' + n, on = inStory(id);
+        return `<div class="sent ${on ? 'in' : ''}"><span class="code">${code(b.id, n)}</span><span class="st">${esc(t)}</span>
+          <span class="acts"><button class="sm" type="button" data-listen="${id}" aria-label="듣기">▶</button>
+          <button class="sm" type="button" data-add="${id}" aria-label="${on ? '빼기' : '담기'}">${on ? '−' : '＋'}</button></span></div>`;
+      }).join('')}</div>`).join('')}
+      <div class="label">내 책에 담은 문장 ${state.items.filter(i => i.k === 'x').length}개</div>`;
+  },
+  reader(){
+    const r = state.reader, beg = r.level === 'beginner';
+    return `
+      <div class="fields">
+        <div class="field"><label class="label" for="rName">친구 이름(별명)</label><input type="text" id="rName" value="${esc(r.name)}"></div>
+        <div class="field"><label class="label" for="rCountry">나라</label><select id="rCountry">${['베트남','일본','중국','몽골','미국','우즈베키스탄'].map(c => `<option ${c === r.country ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+        <div class="field"><label class="label" for="rLevel">한국어 수준</label><select id="rLevel">
+          <option value="beginner" ${beg ? 'selected' : ''}>초급 (TOPIK 1~2급)</option><option value="mid" ${beg ? '' : 'selected'}>중급 (TOPIK 3~4급)</option></select></div>
+        <div class="field"><label class="label" for="rLike">좋아하는 것</label><select id="rLike">${['한국 드라마','K팝','한국 음식','여행','게임'].map(c => `<option ${c === r.like ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      </div>
+      <div class="reader"><span class="label">이 책의 독자</span>
+        <b>${esc(r.country)} 친구 ${esc(r.name)} · ${beg ? '초급' : '중급'} · ${esc(r.like)}를 좋아해요</b>
+        <div class="label" style="margin-top:6px">AI가 정리한 고쳐 쓰기 기준</div>
+        <ul style="margin:0;padding-left:18px">${(beg ? [
+          '한 문장에 한 가지 일만 써요. 긴 문장은 둘로 나눠요.',
+          '문장 끝은 "-어요"로 맞춰요.',
+          '"아우", "곳간"처럼 요즘 잘 쓰지 않는 말은 쉬운 말로 바꿔요.',
+          `${r.like}와 연결되는 표현이 있으면 설명을 붙여요.`
+        ] : [
+          '원문의 표현을 되도록 살리고, 어려운 단어에 설명을 붙여요.',
+          '"-다면", "-는데도" 같은 연결 표현은 그대로 두어도 돼요.',
+          '속담과 관용 표현을 찾아 문화 설명을 붙여요.',
+          `${r.like}와 연결되는 표현이 있으면 설명을 붙여요.`
+        ]).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  },
+  format(){
+    const F = [
+      {k:'mix', t:'두 이야기 섞기', d:'주제가 통하는 두 이야기를 하나로 엮어요.', eg:'같은 밤, 다른 마을에 배고픈 여행자 세 사람이 왔어요.', pro:'고른 문장을 가장 많이 살릴 수 있어요.', con:'두 이야기를 잇는 문장을 잘 써야 해요.'},
+      {k:'talk', t:'대화극으로 바꾸기', d:'서술 문장을 인물의 대화로 바꿔 회화 연습용으로 만들어요.', eg:'형: "동생아, 이 밤에 어디 가?"', pro:'생활 회화를 배우기 좋아요.', con:'고칠 문장이 많아져요.'},
+      {k:'ask', t:'외국인 친구가 묻는 형식', d:'장면마다 친구가 물어볼 질문과 내 대답을 넣어요.', eg:'린: "형이 뭐예요?" / 나: "남자 동생이 부르는…"', pro:'설명이 자연스럽게 들어가요.', con:'이야기 흐름이 자주 끊겨요.'},
+      {k:'two', t:'두 단계 버전', d:'같은 이야기를 쉬운 버전과 원문에 가까운 버전으로 만들어요.', eg:'쉬운 버전 → 원문 버전 순서로 들어요.', pro:'실력이 늘면 다음 단계로 갈 수 있어요.', con:'만들 분량이 두 배예요.'}
+    ];
+    return `<div class="formats">${F.map(f => `
+      <button class="fmt" type="button" data-fmt="${f.k}" aria-pressed="${f.k === state.format}">
+        <b>${f.t}</b><span>${f.d}</span><span class="eg">${esc(f.eg)}</span>
+        <small>좋은 점: ${f.pro}<br>어려운 점: ${f.con}</small></button>`).join('')}</div>
+      ${state.format !== 'mix' ? '<p class="label">샘플은 "두 이야기 섞기" 예시로 이어집니다.</p>' : ''}
+      <div class="field"><label class="label" for="title">책 제목 (직접 지어요)</label><input type="text" id="title" value="${esc(state.title)}"></div>`;
+  },
+  edit(){
+    return `
+      <div class="legend">${Object.entries(KLABEL).map(([k, l]) => `<span class="tag k-${k}">${l}</span>`).join('')}</div>
+      <ol class="items">${state.items.map((it, i) => {
+        const kd = kind(it), t = text(it), opt = it.id && AIOPT[it.id], open = state.open[i];
+        return `<li class="item"><div class="row"><span class="code">${i + 1}. ${it.id ? code(...it.id.split('-')) : '새 문장'}</span><span class="tag k-${kd}">${KLABEL[kd]}</span></div>
+          ${open || it.k === 'm' ? `<textarea id="ed${i}" data-edit="${i}" aria-label="${i + 1}번 문장 고치기">${esc(t)}</textarea>` : `<div class="st">${kd === 'orig' ? hl(t, it.id) : esc(t)}</div>`}
+          ${it.id && kd !== 'orig' ? `<div class="orig">원문: ${esc(ORIG[it.id])}</div>` : ''}
+          ${it.k === 'x' ? `<div class="row" style="justify-content:flex-start">
+            <button class="sm" type="button" data-open="${i}">${open ? '고치기 마침' : '직접 고치기'}</button>
+            ${opt ? `<button class="sm" type="button" data-aiopt="${i}" style="color:var(--ai);border-color:var(--ai)">AI 수정안 보기</button>` : ''}
+            ${kd !== 'orig' ? `<button class="sm" type="button" data-reset="${i}">원문으로</button>` : ''}
+            ${kd === 'aiasis' ? `<button class="sm" type="button" data-confirm="${i}">읽어 보고 확인했어요</button>` : ''}</div>` : ''}
+          ${state.open['ai' + i] && opt ? `<div class="why">${esc(opt.why)}</div><div class="opts">${opt.o.map((o, j) =>
+            `<button class="opt" type="button" data-pickopt="${i}:${j}" aria-pressed="${it.ai === o}">${esc(o)}</button>`).join('')}</div>` : ''}
+        </li>`;
+      }).join('')}</ol>
+      <div class="field"><label class="label" for="newLine">이어 주는 문장 직접 쓰기</label>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input type="text" id="newLine" placeholder="예: 다음 날 아침, 두 마을에 해가 떴어요."><button class="btn" type="button" data-addline>넣기</button></div></div>`;
+  },
+  vocab(){
+    return `
+      <div class="label">단어장 · ${state.vocab.filter(v => v.ok).length}/${state.vocab.length} 확인</div>
+      <div class="vocab">${state.vocab.map((v, i) => `
+        <div class="voc ${v.ok ? '' : 'unchecked'}"><div><div class="w">${esc(v.w)}</div><div class="vi">베트남어: ${esc(v.vi)}</div></div>
+          <div style="display:grid;gap:6px"><input type="text" id="voc${i}" data-voc="${i}" value="${esc(v.easy)}" aria-label="${esc(v.w)} 쉬운 설명">
+          <label><input type="checkbox" data-vok="${i}" ${v.ok ? 'checked' : ''}> 확인했어요 <span class="vi">· AI 초안</span></label></div></div>`).join('')}</div>
+      <div class="reader"><span class="label">문화 설명</span><b>${CULTURE.t}</b><span>${CULTURE.d}</span></div>
+      <div class="label">확인 질문</div>
+      ${QUIZ.map((q, i) => `<div class="q"><b>${i + 1}. ${esc(q.q)}</b><ol>${q.o.map((o, j) => `<li class="${j === q.a ? 'ans' : ''}">${esc(o)}${j === q.a ? ' (정답)' : ''}</li>`).join('')}</ol><span class="tag k-${q.src.startsWith('직접') ? 'new' : q.src.includes('그대로') ? 'aiasis' : 'aiedit'}" style="justify-self:start">${q.src}</span></div>`).join('')}`;
+  },
+  voice(){
+    return `<p class="label">샘플의 ▶는 기기 내장 음성으로 들려줘요. 실제 서비스에서는 성우 낭독 파일과 AI 목소리 파일로 바뀌어요.</p>
+      ${state.items.map((it, i) => {
+        const kd = kind(it), v = it.v, t = text(it);
+        return `<div class="vrow"><div><span class="code">${i + 1}. ${KLABEL[kd]}</span><div class="st">${esc(t)}</div></div>
+          <div class="vsel"><span class="seg" role="group" aria-label="${i + 1}번 목소리">
+            <button type="button" data-vt="${i}:narr" aria-pressed="${v.type === 'narr'}" ${kd !== 'orig' ? 'disabled title="원문 그대로인 문장만 쓸 수 있어요"' : ''}>성우</button>
+            <button type="button" data-vt="${i}:me" aria-pressed="${v.type === 'me'}">내 목소리</button>
+            <button type="button" data-vt="${i}:ai" aria-pressed="${v.type === 'ai'}">AI</button></span>
+            ${v.type === 'ai' ? `<select data-vai="${i}" aria-label="AI 목소리">${Object.entries(AIV).map(([k, a]) => `<option value="${k}" ${k === v.ai ? 'selected' : ''}>${a.n}</option>`).join('')}</select>
+              <span class="seg"><button type="button" data-vs="${i}:normal" aria-pressed="${v.speed === 'normal'}">보통</button><button type="button" data-vs="${i}:slow" aria-pressed="${v.speed === 'slow'}">느리게</button></span>` : ''}
+            ${v.type === 'me' ? `<button type="button" class="rec ${v.rec ? 'done' : ''}" data-rec="${i}">${v.rec ? '녹음함 · 다시' : '● 녹음하기'}</button>` : ''}
+            <button class="sm" type="button" data-play="${i}" aria-label="미리 듣기">▶</button></div></div>`;
+      }).join('')}`;
+  },
+  book(){
+    const used = [...new Set(state.items.filter(i => i.id).map(i => i.id.split('-')[0]))];
+    const c = {orig:0, edit:0, aiedit:0, aiasis:0, new:0}; state.items.forEach(it => c[kind(it)]++);
+    const vc = {narr:0, me:0, ai:0}; state.items.forEach(it => vc[it.v.type]++);
+    const r = state.reader;
+    return `
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-playall>▶ 전체 듣기</button><button class="btn" type="button" data-stop>멈춤</button></div>
+      <article class="bookpage">
+        <div class="for">${esc(r.country)} 친구 ${esc(r.name)}에게 · ${r.level === 'beginner' ? '초급' : '중급'} 한국어</div>
+        <h3>${esc(state.title || '제목 없는 이야기')}</h3>
+        <p class="src">${used.map(b => `「${B[b].title}」`).join(' ')}에서 엮고 고쳐 씀</p>
+        <p class="text">${state.items.map((it, i) => {
+          const kd = kind(it), v = it.v;
+          const mark = (it.id ? code(...it.id.split('-')) + (kd !== 'orig' ? '*' : '') : '') + (v.type === 'ai' ? ' · AI' : '');
+          return `<span id="bt${i}" class="t-${kd}">${esc(text(it))}</span>${mark ? `<sup>${mark}</sup>` : ''} `;
+        }).join('')}</p>
+        <div class="legend" style="justify-content:center"><span class="tag k-orig">원문 · 성우 낭독</span><span class="tag k-edit">고치거나 쓴 문장 (밑줄)</span><span class="tag k-aiasis">AI 제안 그대로 (점선)</span></div>
+        <div class="section"><h4>단어장</h4><div class="tw"><table class="minitable"><tr><th>단어</th><th>쉬운 설명</th><th>베트남어</th></tr>
+          ${state.vocab.map(v => `<tr><td>${esc(v.w)}</td><td>${esc(v.easy)}${v.ok ? '' : ' <span class="tag k-aiasis">확인 전</span>'}</td><td>${esc(v.vi)}</td></tr>`).join('')}</table></div></div>
+        <div class="section"><h4>${CULTURE.t}</h4><p style="margin:0">${CULTURE.d}</p></div>
+        <div class="section"><h4>확인 질문</h4>${QUIZ.map((q, i) => `<div>${i + 1}. ${esc(q.q)} <span style="color:var(--muted)">${q.o.map((o, j) => `(${j + 1}) ${esc(o)}`).join(' ')}</span></div>`).join('')}</div>
+      </article>
+      <div class="label">제작 기록</div>
+      <div class="stats">
+        <div class="stat"><b>${c.orig}</b><small>원문 그대로</small></div>
+        <div class="stat"><b>${c.edit + c.aiedit}</b><small>고친 문장</small></div>
+        <div class="stat"><b>${c.aiasis}</b><small>AI 제안 그대로</small></div>
+        <div class="stat"><b>${c.new}</b><small>직접 쓴 문장</small></div>
+        <div class="stat"><b>${vc.narr} · ${vc.me} · ${vc.ai}</b><small>성우 · 내 목소리 · AI</small></div>
+      </div>
+      <div class="report"><span class="label">선생님께 가는 운영 리포트 (예시)</span>
+        <div class="stats">
+          <div class="stat"><b>28명</b><small>참여 학생</small></div>
+          <div class="stat"><b>26권</b><small>완성한 책</small></div>
+          <div class="stat"><b>34회</b><small>학생당 AI 대화(평균)</small></div>
+          <div class="stat"><b>41%</b><small>학생이 녹음한 문장 비율</small></div>
+        </div>
+        <span style="font-size:13.5px">학생별 책, 문장 출처, AI 대화 기록은 선생님 화면에서 볼 수 있어요. 숫자는 예시입니다.</span></div>`;
+  }
+};
+
+function renderStep(){
+  const s = STEPS[state.step];
+  $('stepH').textContent = s.h; $('stepP').textContent = s.p;
+  $('stepBody').innerHTML = R[s.k]();
+  $('prev').disabled = state.step === 0;
+  $('next').textContent = state.step === STEPS.length - 1 ? '처음으로' : '다음 단계';
+  renderRail(); renderChat();
+}
+function go(i){ stopAll(); state.step = Math.max(0, Math.min(STEPS.length - 1, i)); renderStep(); try{ history.replaceState(null, '', '#s' + (state.step + 1)); }catch(e){} window.scrollTo({top:0, behavior:'smooth'}); }
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const d = t.dataset;
+  if (d.go != null) return go(+d.go);
+  if (d.ask){ const k = STEPS[state.step].k; chatFor(k).push({r:'me', t:d.ask}, {r:'ai', t:SCRIPT[k].chips[d.ask]}); return renderChat(); }
+  if (d.book){ state.book = d.book; return renderStep(); }
+  if (d.listen){ stopAll(); return speak(ORIG[d.listen], {rate:.92}); }
+  if (d.add){
+    const i = state.items.findIndex(it => it.id === d.add);
+    if (i >= 0) state.items.splice(i, 1);
+    else state.items.push({k:'x', id:d.add, v:{type:'narr', ai:'story', speed:'slow', rec:false}});
+    return renderStep();
+  }
+  if (d.fmt){ state.format = d.fmt; return renderStep(); }
+  if (d.open != null){ state.open[d.open] = !state.open[d.open]; renderStep(); const ta = $('ed' + d.open); if (ta) ta.focus(); return; }
+  if (d.aiopt != null){ state.open['ai' + d.aiopt] = !state.open['ai' + d.aiopt]; return renderStep(); }
+  if (d.pickopt){ const [i, j] = d.pickopt.split(':').map(Number); const it = state.items[i]; it.ai = AIOPT[it.id].o[j]; it.t = it.ai; state.open['ai' + i] = false; fixVoice(it); return renderStep(); }
+  if (d.reset != null){ const it = state.items[+d.reset]; delete it.t; delete it.ai; state.open[d.reset] = false; it.v.type = 'narr'; return renderStep(); }
+  if (d.confirm != null){ const it = state.items[+d.confirm]; it.ai = null; return renderStep(); }
+  if (d.addline != null){ const v = $('newLine').value.trim(); if (!v) return $('newLine').focus(); state.items.push({k:'m', t:v, v:{type:'me', ai:'story', speed:'slow', rec:false}}); return renderStep(); }
+  if (d.vt){ const [i, ty] = d.vt.split(':'); state.items[+i].v.type = ty; return renderStep(); }
+  if (d.vs){ const [i, sp] = d.vs.split(':'); state.items[+i].v.speed = sp; return renderStep(); }
+  if (d.rec != null){ const v = state.items[+d.rec].v; v.rec = true; addAI('샘플에서는 실제로 녹음하지 않아요. 실제 서비스에서는 녹음한 뒤 잡음 제거와 음량 보정이 자동으로 들어가요.'); return renderStep(); }
+  if (d.play != null){ stopAll(); const it = state.items[+d.play]; return speak(text(it), voiceParams(it)); }
+  if (d.playall != null){ stopAll(); playFrom(0); return; }
+  if (d.stop != null) return stopAll();
+});
+function playFrom(i){
+  document.querySelectorAll('.t-playing').forEach(e => e.classList.remove('t-playing'));
+  if (i >= state.items.length) return;
+  const it = state.items[i], el = $('bt' + i); if (el) el.classList.add('t-playing');
+  playingIdx = i;
+  const ok = speak(text(it), {...voiceParams(it), onend: () => { if (playingIdx === i) playFrom(i + 1); }});
+  if (!ok) stopAll();
+}
+function fixVoice(it){ if (kind(it) !== 'orig' && it.v.type === 'narr') it.v.type = 'ai'; }
+document.addEventListener('input', e => {
+  const el = e.target, d = el.dataset;
+  if (d.edit != null){ const it = state.items[+d.edit]; if (it.k === 'm') it.t = el.value; else it.t = el.value; fixVoice(it); return; }
+  if (el.id === 'title'){ state.title = el.value; return; }
+  if (el.id === 'rName'){ state.reader.name = el.value; return; }
+  if (d.voc != null){ state.vocab[+d.voc].easy = el.value; return; }
+});
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset;
+  if (d.edit != null) return renderStep();
+  if (el.id === 'rCountry'){ state.reader.country = el.value; return renderStep(); }
+  if (el.id === 'rLevel'){ state.reader.level = el.value; return renderStep(); }
+  if (el.id === 'rLike'){ state.reader.like = el.value; return renderStep(); }
+  if (el.id === 'rName') return renderStep();
+  if (d.vok != null){ state.vocab[+d.vok].ok = el.checked; return renderStep(); }
+  if (d.vai != null){ state.items[+d.vai].v.ai = el.value; return; }
+});
+$('prev').onclick = () => go(state.step - 1);
+$('next').onclick = () => go(state.step === STEPS.length - 1 ? 0 : state.step + 1);
+
+const m = /^#s([1-7])$/.exec(location.hash || '');
+if (m) state.step = +m[1] - 1;
+renderStep();
+})();
+</script>
+
+</body>
+</html>
