@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>우리 학교 갤러리 1화</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: gallery wall — painting stays in view (sticky left on desktop, sticky top on phone), narration text scrolls beside it, player docked at the bottom */
+:root{
+  --wall:#ECEDEF; --panel:#F7F7F8; --ink:#1E2026; --muted:#666A73; --rule:#D4D6DB;
+  --gold:#9A6F17; --gold-wash:rgba(176,132,40,.16); --frame:#2A2B30;
+  --dim:rgba(12,12,16,.52);
+  --f-text:"Gowun Batang","Noto Serif KR","AppleMyungjo",serif;
+  --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --bar-h:84px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --wall:#141518; --panel:#1C1D21; --ink:#E8E6E1; --muted:#9A9DA5; --rule:#2E3036;
+  --gold:#DDB45A; --gold-wash:rgba(221,180,90,.16); --frame:#08080A; --dim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --wall:#141518; --panel:#1C1D21; --ink:#E8E6E1; --muted:#9A9DA5; --rule:#2E3036;
+  --gold:#DDB45A; --gold-wash:rgba(221,180,90,.16); --frame:#08080A; --dim:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--wall);color:var(--ink);font-family:var(--f-ui);}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--wall)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px calc(var(--bar-h) + 40px);
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:start}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.canvas{position:relative;overflow:hidden;background:var(--frame);padding:10px;border-radius:2px;box-shadow:0 18px 40px -22px rgba(0,0,0,.45);cursor:zoom-in}
+.canvas-in{position:relative;overflow:hidden}
+.canvas img{display:block;width:100%;height:auto}
+.spot{position:absolute;border:2px solid var(--gold);border-radius:3px;box-shadow:0 0 0 2000px var(--dim);opacity:0;transition:opacity .5s ease,left .7s ease,top .7s ease,width .7s ease,height .7s ease;pointer-events:none}
+.spot.on{opacity:1}
+.spot span{position:absolute;left:-2px;bottom:100%;margin-bottom:6px;white-space:nowrap;background:var(--gold);color:#16130B;font:600 12px/1 var(--f-ui);padding:5px 8px;border-radius:2px;letter-spacing:.02em}
+.spot.below span{bottom:auto;top:100%;margin:6px 0 0}
+.zoom-hint{position:absolute;right:16px;bottom:16px;background:rgba(0,0,0,.55);color:#fff;font:500 11px/1 var(--f-ui);padding:6px 8px;border-radius:2px}
+.label{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
+.label b{color:var(--ink);font-weight:600;grid-column:1/-1;font-size:15px}
+.label dt{color:var(--muted)} .label dd{margin:0;color:var(--ink)}
+
+.text{min-width:0;max-width:34em}
+.series{font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:600}
+h1{font-family:var(--f-text);font-weight:700;font-size:clamp(26px,3.2vw,36px);line-height:1.3;margin:10px 0 6px;text-wrap:balance}
+.work{font-family:var(--f-text);font-size:17px;color:var(--muted);margin:0}
+.credit{font-size:12px;color:var(--muted);margin:14px 0 30px;padding-bottom:22px;border-bottom:1px solid var(--rule)}
+.para{margin:0 0 1.15em}
+.ln{display:block;font-family:var(--f-text);font-size:18px;line-height:1.85;padding:1px 8px;margin:0 -8px;border-radius:3px;cursor:pointer;transition:background .25s,color .25s;color:var(--ink)}
+.ln:hover{background:var(--gold-wash)}
+.ln.past{color:var(--muted)}
+.ln.cur{background:var(--gold-wash);color:var(--ink);box-shadow:inset 3px 0 0 var(--gold)}
+.ln:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--rule);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.btn{appearance:none;border:0;background:none;color:var(--ink);font:500 13px var(--f-ui);cursor:pointer;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;flex:none}
+.btn:hover{background:var(--gold-wash)}
+.btn:focus-visible{outline:2px solid var(--gold)}
+.play{width:52px;height:52px;background:var(--ink);color:var(--wall)}
+.play:hover{background:var(--ink);opacity:.88}
+.btn svg{width:22px;height:22px;fill:currentColor}
+.play svg{width:24px;height:24px}
+.prog{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.nowline{font-family:var(--f-text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.track{position:relative;height:18px;cursor:pointer;touch-action:none}
+.track::before{content:"";position:absolute;left:0;right:0;top:8px;height:3px;background:var(--rule);border-radius:2px}
+.fill{position:absolute;left:0;top:8px;height:3px;background:var(--gold);border-radius:2px;width:0}
+.knob{position:absolute;top:3px;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:var(--gold);left:0}
+.time{font:500 12px var(--f-ui);font-variant-numeric:tabular-nums;color:var(--muted);flex:none;min-width:88px;text-align:right}
+.chip{appearance:none;border:1px solid var(--rule);background:none;color:var(--ink);font:500 12px var(--f-ui);padding:6px 10px;border-radius:999px;cursor:pointer;flex:none;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="false"]{color:var(--muted)}
+.chip:focus-visible{outline:2px solid var(--gold)}
+
+.lb{position:fixed;inset:0;z-index:30;background:rgba(8,8,10,.94);display:flex;flex-direction:column}
+.lb-top{display:flex;justify-content:space-between;align-items:center;color:#ddd;font:500 13px var(--f-ui);padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.lb-top button{appearance:none;border:1px solid #555;background:none;color:#fff;font:500 13px var(--f-ui);padding:6px 12px;border-radius:999px;cursor:pointer}
+.lb-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.lb-scroll img{display:block;max-width:none;height:100%;width:auto;min-height:320px;margin:0 auto}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:22px;padding-top:0}
+  .stage{top:env(safe-area-inset-top,0px);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px)) 10px;background:var(--wall);z-index:5;gap:0;border-bottom:1px solid var(--rule)}
+  .canvas{padding:6px}
+  .label{display:none}
+  .ln{font-size:17px}
+  .text{max-width:none}
+  .skip{display:none}
+  .time{min-width:0}
+}
+@media (max-width:480px){ .nowline{display:none} .chip{padding:6px 8px} .bar-in{gap:8px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <section class="stage" aria-label="작품">
+    <div class="canvas" id="canvas" role="button" tabindex="0" aria-label="그림 크게 보기">
+      <div class="canvas-in">
+        <img src="painting.jpg" alt="자크 루이 다비드, 나폴레옹 대관식. 노트르담 대성당 안에서 나폴레옹이 왕관을 들어 올리고, 그 앞에 조세핀이 무릎을 꿇고 있다." width="1227" height="747">
+        <div class="spot" id="spot"><span id="spotLabel"></span></div>
+      </div>
+      <span class="zoom-hint">눌러서 크게 보기</span>
+    </div>
+    <dl class="label">
+      <b>나폴레옹 1세의 대관식</b>
+      <dt>작가</dt><dd>자크 루이 다비드 (1748–1825)</dd>
+      <dt>제작</dt><dd>1805–1807년, 캔버스에 유채</dd>
+      <dt>크기</dt><dd>621 × 979cm</dd>
+      <dt>소장</dt><dd>루브르 박물관, 파리</dd>
+    </dl>
+  </section>
+
+  <article class="text">
+    <div class="series">우리 학교 갤러리 · 1화</div>
+    <h1>누가 영웅을 만드는가</h1>
+    <p class="work">자크 루이 다비드 〈나폴레옹 대관식〉</p>
+    <p class="credit">문장을 누르면 그 대목부터 들을 수 있습니다.</p>
+    <div id="lines"></div>
+  </article>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <button class="btn skip" id="back" aria-label="10초 뒤로"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.5" font-size="6.5" text-anchor="middle" font-family="sans-serif" font-weight="700">10</text></svg></button>
+    <button class="btn play" id="play" aria-label="재생"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="btn skip" id="fwd" aria-label="10초 앞으로"><svg viewBox="0 0 24 24"><path d="M12 5V2l5 4-5 4V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.5" font-size="6.5" text-anchor="middle" font-family="sans-serif" font-weight="700">10</text></svg></button>
+    <div class="prog">
+      <div class="nowline" id="nowline">재생을 누르면 해설이 시작됩니다</div>
+      <div class="track" id="track" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="487" aria-valuenow="0"><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
+    </div>
+    <div class="time" id="time">0:00 / 8:07</div>
+    <button class="chip" id="rate" aria-label="재생 속도">1.0×</button>
+    <button class="chip" id="follow" aria-pressed="true">따라가기</button>
+  </div>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <div class="lb-top"><span>나폴레옹 1세의 대관식 · 좌우로 움직여 보세요</span><button id="lbClose">닫기</button></div>
+  <div class="lb-scroll" id="lbScroll"><img src="painting.jpg" alt="나폴레옹 대관식 확대 이미지"></div>
+</div>
+
+<audio id="au" src="audio.mp3" preload="metadata"></audio>
+
+<script>
+const D=[{"t":"아이들과 학교 복도를 걷다가,","s":24.38,"f":null,"p":0},{"t":"화려한 그림 앞에서 발걸음을 멈추었습니다.","s":27.29,"f":null,"p":0},{"t":"커다란 성당 안.","s":32.07,"f":null,"p":0},{"t":"수많은 사람이 숨을 죽인 채 한 곳을 바라보고 있습니다.","s":34.55,"f":null,"p":0},{"t":"시선이 모인 곳에는 황금빛 왕관을 높이 들어 올린 한 남자가 있습니다.","s":41.07,"f":"nap","p":1},{"t":"나폴레옹입니다.","s":49.0,"f":"nap","p":0},{"t":"오늘 우리 학교 갤러리에서 만날 작품은","s":52.64,"f":null,"p":1},{"t":"신고전주의 화가 자크 루이 다비드의 〈나폴레옹 대관식〉입니다.","s":55.56,"f":null,"p":0},{"t":"1804년에 그려진 이 그림은 가로 길이만 10미터에 이르는 거대한 크기라고 합니다.","s":63.27,"f":null,"p":1},{"t":"실제로 마주하면 압도적인 규모에 먼저 놀라게 된다지요.","s":71.51,"f":null,"p":0},{"t":"그림을 보는 이도 대관식에 초대받는 느낌일 것 같습니다.","s":78.17,"f":null,"p":1},{"t":"그런데 이 그림은 단순히 황제의 즉위를 기록한 역사화가 아닙니다.","s":84.56,"f":null,"p":1},{"t":"한 사람을 영웅으로 기억하게 만든 작품입니다.","s":91.38,"f":null,"p":0},{"t":"“이 그림의 주인공은 누구일까요?”","s":97.59,"f":null,"p":1},{"t":"아이들에게 물으면 대부분은 망설임 없이 대답합니다.","s":101.12,"f":null,"p":0},{"t":"\"나폴레옹이요.\"","s":106.83,"f":null,"p":0},{"t":"맞습니다.","s":109.7,"f":null,"p":0},{"t":"하지만 조금 더 자세히 들여다보면 의외의 장면이 보입니다.","s":111.84,"f":null,"p":0},{"t":"나폴레옹의 대관식이지만 그는 자신의 머리에 왕관을 올리고 있지 않습니다.","s":118.69,"f":"nap","p":0},{"t":"무릎을 꿇은 한 여인의 머리 위에 왕관을 얹으려는 순간입니다.","s":126.08,"f":"jos","p":0},{"t":"그 여인은 황후 조세핀입니다.","s":132.51,"f":"jos","p":0},{"t":"왜 이런 장면을 묘사했을까요?","s":138.28,"f":null,"p":1},{"t":"당시 유럽에서 왕의 권위는 교회에서 비롯된다고 여겼습니다.","s":142.05,"f":null,"p":0},{"t":"왕은 신이 선택한 존재였고,","s":149.04,"f":null,"p":0},{"t":"교황은 그 권위를 인정하는 상징적인 인물이었습니다.","s":152.08,"f":"pope","p":0},{"t":"그런데 나폴레옹은 달랐습니다.","s":159.07,"f":null,"p":1},{"t":"그는 교황에게 왕관을 받지 않았습니다.","s":162.32,"f":"pope","p":0},{"t":"스스로 자신의 머리에 왕관을 올렸고,","s":166.31,"f":null,"p":0},{"t":"곧이어 자신의 손으로 황후 조세핀에게도 왕관을 씌워 주었습니다.","s":169.41,"f":"jos","p":0},{"t":"그 행동은 하나의 선언이었습니다.","s":176.76,"f":null,"p":1},{"t":"\"나의 권력은 누구에게서 받은 것이 아니다.\"","s":181.53,"f":null,"p":0},{"t":"교회보다, 전통보다,","s":186.67,"f":null,"p":0},{"t":"자신의 의지를 더 높은 자리에 올려놓은 것입니다.","s":189.65,"f":null,"p":0},{"t":"그 장면을 자크 루이 다비드는 더욱 극적으로 완성합니다.","s":195.91,"f":null,"p":1},{"t":"그림 속 조세핀은 무척 아름답습니다.","s":202.19,"f":"jos","p":0},{"t":"우아하고, 품위 있고, 젊어 보입니다.","s":206.51,"f":"jos","p":0},{"t":"그런데 흥미로운 사실이 하나 있습니다.","s":211.98,"f":null,"p":0},{"t":"사실 조세핀은 나폴레옹보다 여덟 살 연상입니다.","s":215.8,"f":"jos","p":0},{"t":"다비드는 사실 그대로 그리지 않았습니다.","s":222.53,"f":null,"p":1},{"t":"그는 나이를 지웠습니다.","s":226.4,"f":"jos","p":0},{"t":"대신 황후의 품격을 남겼습니다.","s":229.29,"f":"jos","p":0},{"t":"나폴레옹 역시 현실보다 훨씬 당당하고 위엄 있게 표현했습니다.","s":234.32,"f":"nap","p":1},{"t":"심지어 그림 속에는 실제 대관식에 참석하지 않았던","s":241.83,"f":"mom","p":0},{"t":"나폴레옹의 어머니까지 등장합니다.","s":246.41,"f":"mom","p":0},{"t":"왜일까요?","s":250.83,"f":null,"p":0},{"t":"사실을 남기기 위해서가 아니라,","s":254.12,"f":null,"p":1},{"t":"사람들이 믿게 될 역사를 만들기 위해서였습니다.","s":256.57,"f":null,"p":0},{"t":"신고전주의는 흔히 이성과 질서의 미술이라고 말합니다.","s":262.81,"f":null,"p":1},{"t":"저는 아이들에게 이렇게 설명하곤 합니다.","s":269.61,"f":null,"p":0},{"t":"\"신고전주의는 MBTI로 따지면 대문자 T예요.\"","s":275.02,"f":null,"p":1},{"t":"감성보다 이성을 먼저 생각하고,","s":282.38,"f":null,"p":1},{"t":"개인의 감정보다 공동체의 가치를 더 중요하게 여기던 시대였습니다.","s":285.89,"f":null,"p":0},{"t":"그래서 화가들은 있는 그대로의 현실보다","s":292.35,"f":null,"p":0},{"t":"사람들이 믿었으면 하는 모습을 그렸습니다.","s":296.51,"f":null,"p":0},{"t":"영웅은 더 용감하게,","s":301.48,"f":null,"p":1},{"t":"황제는 더 위엄 있게,","s":304.89,"f":null,"p":0},{"t":"국가는 더 숭고하게.","s":308.27,"f":null,"p":0},{"t":"그림은 현실을 복사하는 기술이 아니라,","s":312.6,"f":null,"p":0},{"t":"사람들의 마음을 움직이는 언어였습니다.","s":315.63,"f":null,"p":0},{"t":"그렇다면 이런 생각이 듭니다.","s":321.14,"f":null,"p":1},{"t":"자크 루이 다비드는 화가였을까요?","s":324.83,"f":null,"p":0},{"t":"아니면 이미지를 만드는 사람이었을까요?","s":328.79,"f":null,"p":0},{"t":"오늘날 우리는 매일 수많은 이미지를 만납니다.","s":334.47,"f":null,"p":1},{"t":"광고 속 모델,","s":339.99,"f":null,"p":0},{"t":"SNS에 올라온 사진,","s":342.29,"f":null,"p":0},{"t":"화려한 영상들까지.","s":345.26,"f":null,"p":0},{"t":"모두 누군가가 보여 주고 싶어 하는 모습입니다.","s":348.97,"f":null,"p":0},{"t":"있는 그대로의 모습이라기보다,","s":353.39,"f":null,"p":0},{"t":"기억되고 싶은 모습에 가깝습니다.","s":355.79,"f":null,"p":0},{"t":"생각해 보면 200년 전 다비드가 했던 일과 크게 다르지 않습니다.","s":361.06,"f":null,"p":1},{"t":"붓이 카메라로 바뀌었을 뿐,","s":368.13,"f":null,"p":0},{"t":"사람은 여전히 이미지를 통해 자신을 이야기합니다.","s":371.15,"f":null,"p":0},{"t":"학교 복도에서 그림을 함께 보던 한 아이가 제게 물었습니다.","s":377.54,"f":null,"p":1},{"t":"\"선생님, 그러면 이 그림은 거짓말이에요?\"","s":383.94,"f":null,"p":0},{"t":"참 어려운 질문이었습니다.","s":389.43,"f":null,"p":0},{"t":"저는 잠시 생각한 뒤 이렇게 대답했습니다.","s":392.5,"f":null,"p":0},{"t":"\"거짓말이라기보다,","s":397.4,"f":null,"p":0},{"t":"누군가 가장 보여 주고 싶었던 진실이겠지요.“","s":399.45,"f":null,"p":0},{"t":"그림은 사실을 기록하기도 하지만,","s":405.33,"f":null,"p":1},{"t":"때로는 사람들이 믿게 될 이야기를 만들어 냅니다.","s":408.32,"f":null,"p":0},{"t":"명화를 감상할 때","s":414.11,"f":null,"p":1},{"t":"'무엇을 그렸는가'보다","s":416.08,"f":null,"p":0},{"t":"'왜 이렇게 그리고 싶었을까?'","s":418.3,"f":null,"p":0},{"t":"를 먼저 생각해 보아야 하는 이유입니다.","s":420.46,"f":null,"p":0},{"t":"200년이 넘는 시간이 흘렀습니다.","s":425.05,"f":null,"p":1},{"t":"황제는 사라졌고,","s":428.53,"f":null,"p":0},{"t":"제국도 옛 역사가 되었습니다.","s":430.64,"f":null,"p":0},{"t":"하지만 한 화가가 남긴 이미지는","s":435.16,"f":null,"p":0},{"t":"여전히 우리에게 질문을 던지고 있습니다.","s":438.27,"f":null,"p":0},{"t":"‘영웅은 태어나는 걸까요?","s":442.57,"f":null,"p":0},{"t":"아니면 만들어지는 걸까요?’","s":446.05,"f":null,"p":0},{"t":"질문의 끝에서 우리는 나 자신을 만나게 됩니다.","s":450.2,"f":null,"p":0},{"t":"‘오늘 나는,","s":456.44,"f":null,"p":0},{"t":"사람들에게 어떤 모습으로 기억되고 싶은가.’","s":457.69,"f":null,"p":0},{"t":"학교 복도에서 만난 한 점의 그림은","s":463.56,"f":null,"p":1},{"t":"나폴레옹의 이야기를 들려주는 데서 끝나지 않았습니다.","s":466.42,"f":null,"p":0},{"t":"우리의 시선과 마음까지","s":471.79,"f":null,"p":0},{"t":"조용히 들여다보게 합니다.","s":474.37,"f":null,"p":0},{"t":"오늘 우리 학교 갤러리에서 만난 작품은,","s":478.45,"f":null,"p":0},{"t":"자크 루이 다비드의 《나폴레옹 대관식》이었습니다.","s":481.77,"f":null,"p":0}];
+// focus areas as fractions of the image (left, top, width, height)
+const SPOTS={
+  nap:{r:[.525,.565,.125,.33],n:"나폴레옹"},
+  jos:{r:[.44,.70,.085,.20],n:"황후 조세핀"},
+  pope:{r:[.645,.595,.08,.16],n:"교황 비오 7세"},
+  mom:{r:[.425,.515,.06,.115],n:"나폴레옹의 어머니"}
+};
+const au=document.getElementById('au'),box=document.getElementById('lines');
+let para=null;const els=[];
+D.forEach((d,i)=>{
+  if(!para||d.p){para=document.createElement('p');para.className='para';box.appendChild(para)}
+  const s=document.createElement('span');s.className='ln';s.textContent=d.t;s.tabIndex=0;s.dataset.i=i;
+  const go=()=>{au.currentTime=d.s+0.01;au.play().catch(()=>{});};
+  s.addEventListener('click',go);s.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+  para.appendChild(s);els.push(s);
+});
+const spot=document.getElementById('spot'),spotLabel=document.getElementById('spotLabel');
+let cur=-1,curSpot=null,follow=true;
+function setSpot(k){
+  if(k===curSpot)return;curSpot=k;
+  if(!k){spot.classList.remove('on');return}
+  const r=SPOTS[k].r;
+  Object.assign(spot.style,{left:r[0]*100+'%',top:r[1]*100+'%',width:r[2]*100+'%',height:r[3]*100+'%'});
+  spot.classList.toggle('below',r[1]<.12);
+  spotLabel.textContent=SPOTS[k].n;spot.classList.add('on');
+}
+function idxAt(t){let lo=0,hi=D.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(D[m].s<=t+0.05){a=m;lo=m+1}else hi=m-1}return a}
+const fmt=t=>{t=Math.max(0,Math.floor(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const fill=document.getElementById('fill'),knob=document.getElementById('knob'),timeEl=document.getElementById('time'),track=document.getElementById('track'),nowline=document.getElementById('nowline');
+function tick(){
+  const t=au.currentTime,dur=au.duration||486.7;
+  const p=Math.min(100,t/dur*100);fill.style.width=p+'%';knob.style.left=p+'%';
+  timeEl.textContent=fmt(t)+' / '+fmt(dur);track.setAttribute('aria-valuenow',Math.round(t));
+  const i=idxAt(t);
+  if(i!==cur){
+    els.forEach((e,j)=>{e.classList.toggle('cur',j===i);e.classList.toggle('past',i>=0&&j<i)});
+    cur=i;
+    if(i>=0){nowline.textContent=D[i].t;setSpot(D[i].f);
+      if(follow&&!au.paused){const r=els[i].getBoundingClientRect(),vh=innerHeight;
+        const stage=document.querySelector('.stage'),sr=stage.getBoundingClientRect();
+        const topSafe=(innerWidth<=860?sr.bottom:0)+20,botSafe=vh-110;
+        if(r.top<topSafe||r.bottom>botSafe){scrollBy({top:r.top-(topSafe+(botSafe-topSafe)*.3),behavior:'smooth'})}}}
+    else setSpot(null);
+  }
+}
+let raf;function loop(){tick();if(!au.paused)raf=requestAnimationFrame(loop)}
+const playBtn=document.getElementById('play'),icon=document.getElementById('playIcon');
+au.addEventListener('play',()=>{icon.innerHTML='<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';playBtn.setAttribute('aria-label','일시정지');cur=-2;loop()});
+au.addEventListener('pause',()=>{icon.innerHTML='<path d="M8 5v14l11-7z"/>';playBtn.setAttribute('aria-label','재생');tick()});
+au.addEventListener('seeked',tick);au.addEventListener('loadedmetadata',tick);
+playBtn.onclick=()=>au.paused?au.play().catch(()=>{}):au.pause();
+document.getElementById('back').onclick=()=>{au.currentTime=Math.max(0,au.currentTime-10)};
+document.getElementById('fwd').onclick=()=>{au.currentTime=Math.min(au.duration||486,au.currentTime+10)};
+const rates=[1,1.25,1.5,0.8];let ri=0;const rateBtn=document.getElementById('rate');
+rateBtn.onclick=()=>{ri=(ri+1)%rates.length;au.playbackRate=rates[ri];rateBtn.textContent=rates[ri].toFixed(rates[ri]%1&&rates[ri]!==1.5?2:1)+'×'};
+const fb=document.getElementById('follow');fb.onclick=()=>{follow=!follow;fb.setAttribute('aria-pressed',follow)};
+function seekX(x){const r=track.getBoundingClientRect();au.currentTime=Math.max(0,Math.min(1,(x-r.left)/r.width))*(au.duration||486.7);tick()}
+let drag=false;
+track.addEventListener('pointerdown',e=>{drag=true;track.setPointerCapture(e.pointerId);seekX(e.clientX)});
+track.addEventListener('pointermove',e=>{if(drag)seekX(e.clientX)});
+track.addEventListener('pointerup',()=>drag=false);
+track.addEventListener('keydown',e=>{if(e.key==='ArrowRight')au.currentTime+=5;if(e.key==='ArrowLeft')au.currentTime-=5});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target===document.body){e.preventDefault();playBtn.click()}});
+// lightbox
+const lb=document.getElementById('lb'),lbs=document.getElementById('lbScroll'),cv=document.getElementById('canvas');
+function openLb(){lb.hidden=false;requestAnimationFrame(()=>{let cx=.55,cy=.6;if(curSpot){const r=SPOTS[curSpot].r;cx=r[0]+r[2]/2;cy=r[1]+r[3]/2}
+  lbs.scrollLeft=cx*lbs.scrollWidth-lbs.clientWidth/2;lbs.scrollTop=cy*lbs.scrollHeight-lbs.clientHeight/2})}
+cv.addEventListener('click',openLb);cv.addEventListener('keydown',e=>{if(e.key==='Enter'){openLb()}});
+document.getElementById('lbClose').onclick=()=>{lb.hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.hidden=true});
+tick();
+</script>
+
+</body>
+</html>
