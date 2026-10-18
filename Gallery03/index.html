@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오르세 데이트 1화</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: gallery wall — painting stays in view (sticky left on desktop, sticky top on phone), narration text scrolls beside it, player docked at the bottom */
+:root{
+  --wall:#ECEDEF; --panel:#F7F7F8; --ink:#1E2026; --muted:#666A73; --rule:#D4D6DB;
+  --gold:#9A6F17; --gold-wash:rgba(176,132,40,.16); --frame:#2A2B30;
+  --dim:rgba(12,12,16,.52);
+  --f-text:"Gowun Batang","Noto Serif KR","AppleMyungjo",serif;
+  --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --bar-h:84px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --wall:#141518; --panel:#1C1D21; --ink:#E8E6E1; --muted:#9A9DA5; --rule:#2E3036;
+  --gold:#DDB45A; --gold-wash:rgba(221,180,90,.16); --frame:#08080A; --dim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --wall:#141518; --panel:#1C1D21; --ink:#E8E6E1; --muted:#9A9DA5; --rule:#2E3036;
+  --gold:#DDB45A; --gold-wash:rgba(221,180,90,.16); --frame:#08080A; --dim:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--wall);color:var(--ink);font-family:var(--f-ui);}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--wall)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px calc(var(--bar-h) + 40px);
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:start}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.canvas{position:relative;overflow:hidden;background:var(--frame);padding:10px;border-radius:2px;box-shadow:0 18px 40px -22px rgba(0,0,0,.45);cursor:zoom-in}
+.canvas-in{position:relative;overflow:hidden}
+.canvas img{display:block;width:100%;height:auto}
+.spot{position:absolute;border:2px solid var(--gold);border-radius:3px;box-shadow:0 0 0 2000px var(--dim);opacity:0;transition:opacity .5s ease,left .7s ease,top .7s ease,width .7s ease,height .7s ease;pointer-events:none}
+.spot.on{opacity:1}
+.spot span{position:absolute;left:-2px;bottom:100%;margin-bottom:6px;white-space:nowrap;background:var(--gold);color:#16130B;font:600 12px/1 var(--f-ui);padding:5px 8px;border-radius:2px;letter-spacing:.02em}
+.spot.right span{left:auto;right:-2px}
+.spot.below span{bottom:auto;top:100%;margin:6px 0 0}
+.zoom-hint{position:absolute;right:16px;bottom:16px;background:rgba(0,0,0,.55);color:#fff;font:500 11px/1 var(--f-ui);padding:6px 8px;border-radius:2px}
+.label{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
+.label b{color:var(--ink);font-weight:600;grid-column:1/-1;font-size:15px}
+.label dt{color:var(--muted)} .label dd{margin:0;color:var(--ink)}
+
+.text{min-width:0;max-width:34em;word-break:keep-all}
+.series{font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:600}
+h1{font-family:var(--f-text);font-weight:700;font-size:clamp(26px,3.2vw,36px);line-height:1.3;margin:10px 0 6px;text-wrap:balance;word-break:keep-all}
+.work{font-family:var(--f-text);font-size:17px;color:var(--muted);margin:0}
+.credit{font-size:12px;color:var(--muted);margin:14px 0 30px;padding-bottom:22px;border-bottom:1px solid var(--rule)}
+.para{margin:0 0 1.15em}
+.ln{display:block;font-family:var(--f-text);font-size:18px;line-height:1.85;padding:1px 8px;margin:0 -8px;border-radius:3px;cursor:pointer;transition:background .25s,color .25s;color:var(--ink)}
+.ln:hover{background:var(--gold-wash)}
+.ln.past{color:var(--muted)}
+.ln.cur{background:var(--gold-wash);color:var(--ink);box-shadow:inset 3px 0 0 var(--gold)}
+.ln:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--rule);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.btn{appearance:none;border:0;background:none;color:var(--ink);font:500 13px var(--f-ui);cursor:pointer;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;flex:none}
+.btn:hover{background:var(--gold-wash)}
+.btn:focus-visible{outline:2px solid var(--gold)}
+.play{width:52px;height:52px;background:var(--ink);color:var(--wall)}
+.play:hover{background:var(--ink);opacity:.88}
+.btn svg{width:22px;height:22px;fill:currentColor}
+.play svg{width:24px;height:24px}
+.prog{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.nowline{font-family:var(--f-text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.track{position:relative;height:18px;cursor:pointer;touch-action:none}
+.track::before{content:"";position:absolute;left:0;right:0;top:8px;height:3px;background:var(--rule);border-radius:2px}
+.fill{position:absolute;left:0;top:8px;height:3px;background:var(--gold);border-radius:2px;width:0}
+.knob{position:absolute;top:3px;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:var(--gold);left:0}
+.time{font:500 12px var(--f-ui);font-variant-numeric:tabular-nums;color:var(--muted);flex:none;min-width:88px;text-align:right}
+.chip{appearance:none;border:1px solid var(--rule);background:none;color:var(--ink);font:500 12px var(--f-ui);padding:6px 10px;border-radius:999px;cursor:pointer;flex:none;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="false"]{color:var(--muted)}
+.chip:focus-visible{outline:2px solid var(--gold)}
+
+.lb{position:fixed;inset:0;z-index:30;background:rgba(8,8,10,.94);display:flex;flex-direction:column}
+.lb-top{display:flex;justify-content:space-between;align-items:center;color:#ddd;font:500 13px var(--f-ui);padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.lb-top button{appearance:none;border:1px solid #555;background:none;color:#fff;font:500 13px var(--f-ui);padding:6px 12px;border-radius:999px;cursor:pointer}
+.lb-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.lb-scroll img{display:block;max-width:none;height:100%;width:auto;min-height:320px;margin:0 auto}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:22px;padding-top:0}
+  .stage{top:env(safe-area-inset-top,0px);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px)) 10px;background:var(--wall);z-index:5;gap:0;border-bottom:1px solid var(--rule)}
+  .canvas{padding:6px}
+  .label{display:none}
+  .ln{font-size:17px}
+  .text{max-width:none}
+  .skip{display:none}
+  .time{min-width:0}
+}
+@media (max-width:480px){ .nowline{display:none} .chip{padding:6px 8px} .bar-in{gap:8px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <section class="stage" aria-label="작품">
+    <div class="canvas" id="canvas" role="button" tabindex="0" aria-label="그림 크게 보기">
+      <div class="canvas-in">
+        <img src="painting.jpg" alt="피에르 오귀스트 르누아르, 물랭 드 라 갈레트의 무도회. 나무 아래 야외 무도장에서 사람들이 춤추고 탁자에 둘러앉아 이야기를 나누고 있다." width="1440" height="950">
+        <div class="spot" id="spot"><span id="spotLabel"></span></div>
+      </div>
+      <span class="zoom-hint">눌러서 크게 보기</span>
+    </div>
+    <dl class="label">
+      <b>물랭 드 라 갈레트의 무도회</b>
+      <dt>작가</dt><dd>피에르 오귀스트 르누아르 (1841–1919)</dd>
+      <dt>제작</dt><dd>1876년, 캔버스에 유채</dd>
+      <dt>크기</dt><dd>131 × 175cm</dd>
+      <dt>소장</dt><dd>오르세 미술관, 파리</dd>
+    </dl>
+  </section>
+
+  <article class="text">
+    <div class="series">오르세 데이트 · 1화</div>
+    <h1>르누아르, 파리의 일요일을 그리다</h1>
+    <p class="work">피에르 오귀스트 르누아르 〈물랭 드 라 갈레트의 무도회〉</p>
+    <p class="credit">문장을 누르면 그 대목부터 들을 수 있습니다.</p>
+    <div id="lines"></div>
+  </article>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <button class="btn skip" id="back" aria-label="10초 뒤로"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.5" font-size="6.5" text-anchor="middle" font-family="sans-serif" font-weight="700">10</text></svg></button>
+    <button class="btn play" id="play" aria-label="재생"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="btn skip" id="fwd" aria-label="10초 앞으로"><svg viewBox="0 0 24 24"><path d="M12 5V2l5 4-5 4V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.5" font-size="6.5" text-anchor="middle" font-family="sans-serif" font-weight="700">10</text></svg></button>
+    <div class="prog">
+      <div class="nowline" id="nowline">재생을 누르면 해설이 시작됩니다</div>
+      <div class="track" id="track" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="609" aria-valuenow="0"><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
+    </div>
+    <div class="time" id="time">0:00 / 10:09</div>
+    <button class="chip" id="rate" aria-label="재생 속도">1.0×</button>
+    <button class="chip" id="follow" aria-pressed="true">따라가기</button>
+  </div>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <div class="lb-top"><span>물랭 드 라 갈레트의 무도회 · 좌우로 움직여 보세요</span><button id="lbClose">닫기</button></div>
+  <div class="lb-scroll" id="lbScroll"><img src="painting.jpg" alt="물랭 드 라 갈레트의 무도회 확대 이미지"></div>
+</div>
+
+<audio id="au" src="audio.mp3" preload="metadata"></audio>
+
+<script>
+const D=[{"t":"파리 센 강변에 자리한 오르세 미술관.","s":16.81,"f":null,"p":1},{"t":"이곳은 1900년 파리 만국박람회를 위해 지어진 기차역이었지만,","s":19.93,"f":null,"p":0},{"t":"지금은 19세기 미술을 대표하는 명화들이 모인 세계적인 미술관이 됐습니다.","s":25.75,"f":null,"p":0},{"t":"오르세를 대표하는 커다란 시계창,","s":33.07,"f":null,"p":0},{"t":"높은 철제 아치를 통해 부드러운 빛이 내려오는 이곳에서","s":36.16,"f":null,"p":0},{"t":"우리는 모네와 르누아르, 드가와 고흐의 그림들을 만나게 됩니다.","s":41.23,"f":null,"p":0},{"t":"루브르가 고대에서 르네상스까지의 미술을 보여준다면","s":47.64,"f":null,"p":0},{"t":"오르세에는 19세기 후반부터 20세기 초까지,","s":52.77,"f":null,"p":0},{"t":"근대 미술이 탄생하던 시기의 작품들이 모여 있습니다.","s":56.62,"f":null,"p":0},{"t":"그럼 지금부터 저와 함께 오르세 미술관 속으로 들어가 볼까요?","s":61.5,"f":null,"p":0},{"t":"파리 북쪽 언덕, 몽마르트르.","s":69.36,"f":null,"p":1},{"t":"지금은 수많은 여행자가 찾는 관광지지만,","s":73.14,"f":null,"p":0},{"t":"150년 전 이 언덕을 오르던 사람들은 여행자가 아니었습니다.","s":76.69,"f":null,"p":0},{"t":"한 주 동안 공장에서 일한 노동자도,","s":82.6,"f":null,"p":1},{"t":"재봉틀 앞에 오래 앉아 있던 재봉사도,","s":85.55,"f":null,"p":0},{"t":"물감 묻은 작업복을 입은 젊은 화가도","s":89.02,"f":null,"p":0},{"t":"일요일이면 하나둘 이곳을 찾았습니다.","s":92.19,"f":null,"p":0},{"t":"그들은 일요일 오후를 만나러 가는 사람들이었죠.","s":96.62,"f":null,"p":1},{"t":"19세기 후반의 파리는 빠르게 변하고 있었습니다.","s":102.13,"f":null,"p":1},{"t":"오래된 골목이 사라진 자리에는 넓은 대로가 놓였고,","s":107.02,"f":null,"p":0},{"t":"철도와 공장이 도시의 속도를 바꾸어 놓았습니다.","s":111.04,"f":null,"p":0},{"t":"사람들은 더 많은 물건을 만들고,","s":115.71,"f":null,"p":0},{"t":"더 빠르게 움직이며, 정해진 시간에 맞춰 살아가기 시작했습니다.","s":118.33,"f":null,"p":0},{"t":"근대적인 도시의 모습이 갖춰질수록","s":124.38,"f":null,"p":0},{"t":"사람들에게 하루뿐인 휴일은 더욱 소중한 시간이 됐습니다.","s":126.96,"f":null,"p":0},{"t":"사람들은 파리 중심에서 조금 떨어진 몽마르트르로 향했죠.","s":132.72,"f":null,"p":1},{"t":"그 무렵 몽마르트르는 집세가 저렴해","s":139.19,"f":null,"p":1},{"t":"노동자와 장인, 젊은 예술가들이 함께 살아가던 동네였어요.","s":142.33,"f":null,"p":0},{"t":"언덕 곳곳에는 포도밭과 풍차가 남아 있었고,","s":148.59,"f":null,"p":0},{"t":"도시와 멀지 않으면서도 잠시 다른 시간 속으로 들어온 듯한 풍경을 간직하고 있었죠.","s":152.36,"f":null,"p":0},{"t":"그 중에서도 사람들이 가장 즐겨 찾았던 곳이 바로 '물랭 드 라 갈레트'였습니다.","s":159.95,"f":null,"p":1},{"t":"'물랭'은 풍차를, '갈레트'는 둥글고 납작한 빵을 뜻합니다.","s":167.62,"f":null,"p":1},{"t":"풍차로 곡식을 빻아 빵을 만들던 이곳은","s":174.75,"f":null,"p":0},{"t":"시간이 흐르며 야외 카페와 무도장으로 바뀌었습니다.","s":177.79,"f":null,"p":0},{"t":"입장료도 비싸지 않았습니다.","s":182.73,"f":null,"p":0},{"t":"그래서 노동자도, 재봉사도 같은 음악을 들으며 한 공간에서 어울릴 수 있었습니다.","s":185.92,"f":null,"p":0},{"t":"사람들은 나무 아래 둘러앉아 와인을 마시고,","s":194.0,"f":"table","p":1},{"t":"작은 악단의 연주가 시작되면 자리에서 일어나 춤을 췄어요.","s":197.42,"f":"dance","p":0},{"t":"특별한 사람들만을 위한 사교장이 아니라,","s":202.86,"f":null,"p":0},{"t":"평범한 사람들이 잠시 행복해질 수 있는 장소였죠.","s":206.03,"f":null,"p":0},{"t":"1876년 어느 일요일.","s":211.82,"f":null,"p":1},{"t":"이 풍경을 오래 바라보던 한 젊은 화가가 있었습니다.","s":214.81,"f":null,"p":0},{"t":"그의 이름은 피에르 오귀스트 르누아르.","s":220.13,"f":null,"p":0},{"t":"당시 서른다섯 살이었던 르누아르는 몽마르트르에 작업실을 두고 있었습니다.","s":224.21,"f":null,"p":0},{"t":"모네와 함께 새로운 그림을 시도하고 있었지만, 아직 넉넉한 생활을 하는 화가는 아니었습니다.","s":230.74,"f":null,"p":0},{"t":"어린 시절부터 생계를 위해 도자기와 부채에 그림을 그리며 화가의 길을 시작한 르누아르는","s":238.93,"f":null,"p":0},{"t":"화려한 귀족보다 평범한 사람들의 삶을 누구보다 가까이에서 바라봤습니다.","s":246.13,"f":null,"p":0},{"t":"그래서 그의 시선은 언제나 이름 없는 사람들의 일상으로 향했죠.","s":253.66,"f":null,"p":0},{"t":"사람들은 음악을 듣고 있었지만,","s":260.38,"f":null,"p":1},{"t":"르누아르는 그들 위로 흘러가는 빛을 보고 있었습니다.","s":263.01,"f":null,"p":0},{"t":"나뭇잎 사이로 햇살이 쏟아지면","s":268.4,"f":"light","p":0},{"t":"사람들의 모자와 어깨, 드레스 위에는 둥근 빛의 조각들이 내려앉았죠","s":270.94,"f":"light","p":0},{"t":"바람이 불고 나뭇가지가 흔들릴 때마다 빛과 그림자의 무늬도 함께 움직였어요.","s":277.4,"f":"light","p":0},{"t":"르누아르가 붙잡고 싶었던 것은 사람들의 얼굴만이 아니었습니다.","s":285.15,"f":null,"p":1},{"t":"춤추는 몸짓과 웃음소리, 햇빛과 그늘이 뒤섞인 공기,","s":291.07,"f":"dance","p":0},{"t":"그리고 그곳을 채우고 있던 생기까지 화폭에 담고 싶었죠.","s":297.06,"f":null,"p":0},{"t":"하지만 이런 순간은 오래 기다려 주지 않습니다.","s":303.28,"f":null,"p":1},{"t":"빛은 끊임없이 달라지고 사람들은 계속 움직입니다.","s":308.3,"f":null,"p":0},{"t":"르누아르는 형태를 정확하게 그리는 것보다 순간의 빛과 공기를 담고 싶었습니다.","s":313.94,"f":null,"p":0},{"t":"짧은 붓질과 밝은 색채로 눈앞의 인상을 표현했고,","s":321.07,"f":null,"p":0},{"t":"이런 새로운 시도는 훗날 '인상주의'라는 이름으로 불리게 됩니다.","s":325.67,"f":null,"p":0},{"t":"《물랭 드 라 갈레트의 무도회》는 사람 키보다도 큰 대형 작품입니다.","s":331.97,"f":null,"p":1},{"t":"르누아르는 이 거대한 캔버스에 한 사람의 초상이 아니라,","s":338.27,"f":null,"p":0},{"t":"파리의 일요일 오후 전체를 담아내고 싶었어요.","s":343.02,"f":null,"p":0},{"t":"그래서 현장에서 빛과 분위기를 거듭 관찰하며 작품을 완성했죠.","s":347.64,"f":null,"p":0},{"t":"그림 속에는 르누아르의 친구들과 이웃들이 등장합니다.","s":354.61,"f":"table","p":1},{"t":"작가 조르주 리비에르, 화가 프랑크 라미,","s":359.39,"f":"table","p":0},{"t":"그리고 르누아르가 즐겨 그렸던 모델 마르고 등","s":363.52,"f":"margot","p":0},{"t":"실제로 몽마르트르를 드나들던 사람들이 이 풍경을 함께 채우고 있습니다.","s":367.8,"f":"table","p":0},{"t":"하지만 이 작품은 특정 인물들의 단체 초상화는 아닙니다.","s":374.31,"f":null,"p":0},{"t":"르누아르가 담고 싶었던 것은 누구의 얼굴인가보다,","s":379.62,"f":null,"p":0},{"t":"사람들이 함께 만들어 내는 활기찬 분위기였죠.","s":383.45,"f":null,"p":0},{"t":"가까이 있는 인물은 비교적 선명하지만,","s":388.66,"f":"front","p":1},{"t":"사람들 사이로 시선을 옮길수록 형태는 점차 부드럽게 흩어집니다.","s":391.68,"f":"back","p":0},{"t":"모자와 드레스, 얼굴과 나뭇잎이 짧은 붓질 속에서 자연스럽게 이어지고,","s":398.01,"f":null,"p":0},{"t":"나뭇잎 사이로 스며드는 햇살은 그림 전체를 따뜻하게 감싸고 있습니다.","s":404.67,"f":null,"p":0},{"t":"그래서 이 작품은 한순간을 멈춘 사진이라기보다","s":411.16,"f":null,"p":0},{"t":"음악이 흐르는 동안 계속 움직이는 장면처럼 느껴집니다.","s":415.72,"f":null,"p":0},{"t":"사람들의 웃음소리와 잔이 부딪히는 소리, 춤추는 발걸음까지 그림 밖으로 흘러나오는 듯하죠.","s":421.07,"f":null,"p":0},{"t":"1877년 이 그림은 제3회 인상주의 전시회에서 관람객들과 처음 만났습니다.","s":430.26,"f":null,"p":0},{"t":"전통적인 회화에 익숙했던 사람들에게는 다소 낯선 그림이었지만,","s":438.22,"f":null,"p":0},{"t":"다른 한편에서는 이전에는 볼 수 없었던 생생한 빛과 삶의 분위기를 담아낸 새로운 회화라는 찬사를 받았습니다.","s":443.19,"f":null,"p":0},{"t":"이 그림 속에는 위대한 영웅도, 극적인 사건도 없습니다.","s":452.64,"f":null,"p":0},{"t":"그저 휴일을 보내는 평범한 파리 사람들이 있을 뿐이죠","s":457.79,"f":null,"p":0},{"t":"하지만 바로 그 평범한 하루가 근대 회화의 새로운 주제가 됐습니다.","s":463.29,"f":null,"p":0},{"t":"르누아르는 역사나 신화가 아니라, 자신이 살아가는 시대를 그리고 싶었습니다.","s":469.45,"f":null,"p":0},{"t":"도시가 빠르게 변해 가는 가운데 사람들이 잠시 쉬고, 웃고, 춤추며 행복을 나누는 순간.","s":476.56,"f":null,"p":0},{"t":"그 역시 오래 남길 가치가 있는 삶이라고 믿었던 것이죠.","s":484.83,"f":null,"p":0},{"t":"이 작품은 훗날 동료 화가이자 후원자였던 귀스타브 카유보트의 소장품이 됐습니다.","s":490.71,"f":null,"p":0},{"t":"카유보트는 자신이 평생 모은 인상주의 컬렉션을 프랑스 국가에 남겼고,","s":498.11,"f":null,"p":0},{"t":"그 뜻에 따라 《물랭 드 라 갈레트의 무도회》도","s":503.8,"f":null,"p":0},{"t":"오늘날 오르세 미술관을 대표하는 작품으로 자리하게 됐습니다.","s":507.23,"f":null,"p":0},{"t":"지금도 이 그림 앞에는 수많은 사람들이 발걸음을 멈춥니다.","s":513.32,"f":null,"p":1},{"t":"150년 전 어느 일요일 오후.","s":519.16,"f":null,"p":0},{"t":"그날의 음악은 오래전에 멈췄고, 춤추던 사람들의 삶도 모두 지나갔습니다.","s":522.28,"f":null,"p":0},{"t":"하지만 나뭇잎 사이로 스며들던 햇살과 사람들의 웃음,","s":529.64,"f":null,"p":0},{"t":"함께 이야기를 나누던 오후의 온기는 여전히 화폭 안에 머물러 있습니다.","s":534.5,"f":null,"p":0},{"t":"르누아르는 춤을 그린 것이 아니라,","s":541.01,"f":null,"p":1},{"t":"행복했던 시간을 그렸습니다.","s":543.47,"f":null,"p":0},{"t":"그리고 그 행복은 거창한 사건 속에 있지 않았습니다.","s":546.93,"f":null,"p":0},{"t":"바쁜 한 주를 보내고 친구를 만나 함께 웃고,","s":552.02,"f":null,"p":0},{"t":"좋아하는 음악을 들으며 잠시 걱정을 잊는 평범한 하루.","s":556.14,"f":null,"p":0},{"t":"어쩌면 우리에게 오래 남는 기억도 그런 순간인지 모릅니다.","s":561.67,"f":null,"p":0},{"t":"특별한 일이 있어서가 아니라,","s":567.49,"f":null,"p":0},{"t":"함께했던 사람과 그날의 빛, 그리고 그때의 공기가 문득 마음속에 되살아나는 날.","s":569.67,"f":null,"p":0},{"t":"그렇기에 150년이 지난 오늘도 르누아르의 그림은 여전히 우리의 마음을 움직입니다.","s":578.32,"f":null,"p":0},{"t":"그리고 그 풍경이 지금도 따뜻하게 다가오는 이유는,","s":586.14,"f":null,"p":0},{"t":"우리 역시 그런 평범한 하루의 소중함을 알고 있기 때문일 것입니다.","s":590.7,"f":null,"p":0},{"t":"다음 시간에도 오르세의 또 다른 명화로 찾아오겠습니다.","s":597.57,"f":null,"p":1},{"t":"지금까지 ‘최연진의 오르세 데이트’였습니다.","s":602.47,"f":null,"p":0}];
+// focus areas as fractions of the image (left, top, width, height)
+const SPOTS={
+  dance:{r:[.07,.20,.23,.63],n:"춤추는 사람들"},
+  margot:{r:[.07,.20,.23,.63],n:"모델 마르고 (분홍 드레스)"},
+  table:{r:[.62,.33,.38,.52],n:"탁자에 둘러앉은 친구들"},
+  light:{r:[0,.44,.30,.42],n:"나뭇잎 사이로 내려앉은 빛"},
+  front:{r:[.30,.29,.33,.70],n:"가까이 있는 인물"},
+  back:{r:[.10,.12,.70,.20],n:"멀어질수록 흩어지는 형태"}
+};
+const au=document.getElementById('au'),box=document.getElementById('lines');
+let para=null;const els=[];
+D.forEach((d,i)=>{
+  if(!para||d.p){para=document.createElement('p');para.className='para';box.appendChild(para)}
+  const s=document.createElement('span');s.className='ln';s.textContent=d.t;s.tabIndex=0;s.dataset.i=i;
+  const go=()=>{au.currentTime=d.s+0.01;au.play().catch(()=>{});};
+  s.addEventListener('click',go);s.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+  para.appendChild(s);els.push(s);
+});
+const spot=document.getElementById('spot'),spotLabel=document.getElementById('spotLabel');
+let cur=-1,curSpot=null,follow=true;
+function setSpot(k){
+  if(k===curSpot)return;curSpot=k;
+  if(!k){spot.classList.remove('on');return}
+  const r=SPOTS[k].r;
+  Object.assign(spot.style,{left:r[0]*100+'%',top:r[1]*100+'%',width:r[2]*100+'%',height:r[3]*100+'%'});
+  spot.classList.toggle('below',r[1]<.12);spot.classList.toggle('right',r[0]+r[2]>.75);
+  spotLabel.textContent=SPOTS[k].n;spot.classList.add('on');
+}
+function idxAt(t){let lo=0,hi=D.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(D[m].s<=t+0.05){a=m;lo=m+1}else hi=m-1}return a}
+const fmt=t=>{t=Math.max(0,Math.floor(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const fill=document.getElementById('fill'),knob=document.getElementById('knob'),timeEl=document.getElementById('time'),track=document.getElementById('track'),nowline=document.getElementById('nowline');
+function tick(){
+  const t=au.currentTime,dur=au.duration||608.6;
+  const p=Math.min(100,t/dur*100);fill.style.width=p+'%';knob.style.left=p+'%';
+  timeEl.textContent=fmt(t)+' / '+fmt(dur);track.setAttribute('aria-valuenow',Math.round(t));
+  const i=idxAt(t);
+  if(i!==cur){
+    els.forEach((e,j)=>{e.classList.toggle('cur',j===i);e.classList.toggle('past',i>=0&&j<i)});
+    cur=i;
+    if(i>=0){nowline.textContent=D[i].t;setSpot(D[i].f);
+      if(follow&&!au.paused){const r=els[i].getBoundingClientRect(),vh=innerHeight;
+        const stage=document.querySelector('.stage'),sr=stage.getBoundingClientRect();
+        const topSafe=(innerWidth<=860?sr.bottom:0)+20,botSafe=vh-110;
+        if(r.top<topSafe||r.bottom>botSafe){scrollBy({top:r.top-(topSafe+(botSafe-topSafe)*.3),behavior:'smooth'})}}}
+    else setSpot(null);
+  }
+}
+let raf;function loop(){tick();if(!au.paused)raf=requestAnimationFrame(loop)}
+const playBtn=document.getElementById('play'),icon=document.getElementById('playIcon');
+au.addEventListener('play',()=>{icon.innerHTML='<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';playBtn.setAttribute('aria-label','일시정지');cur=-2;loop()});
+au.addEventListener('pause',()=>{icon.innerHTML='<path d="M8 5v14l11-7z"/>';playBtn.setAttribute('aria-label','재생');tick()});
+au.addEventListener('seeked',tick);au.addEventListener('loadedmetadata',tick);
+playBtn.onclick=()=>au.paused?au.play().catch(()=>{}):au.pause();
+document.getElementById('back').onclick=()=>{au.currentTime=Math.max(0,au.currentTime-10)};
+document.getElementById('fwd').onclick=()=>{au.currentTime=Math.min(au.duration||608,au.currentTime+10)};
+const rates=[1,1.25,1.5,0.8];let ri=0;const rateBtn=document.getElementById('rate');
+rateBtn.onclick=()=>{ri=(ri+1)%rates.length;au.playbackRate=rates[ri];rateBtn.textContent=rates[ri].toFixed(rates[ri]%1&&rates[ri]!==1.5?2:1)+'×'};
+const fb=document.getElementById('follow');fb.onclick=()=>{follow=!follow;fb.setAttribute('aria-pressed',follow)};
+function seekX(x){const r=track.getBoundingClientRect();au.currentTime=Math.max(0,Math.min(1,(x-r.left)/r.width))*(au.duration||608.6);tick()}
+let drag=false;
+track.addEventListener('pointerdown',e=>{drag=true;track.setPointerCapture(e.pointerId);seekX(e.clientX)});
+track.addEventListener('pointermove',e=>{if(drag)seekX(e.clientX)});
+track.addEventListener('pointerup',()=>drag=false);
+track.addEventListener('keydown',e=>{if(e.key==='ArrowRight')au.currentTime+=5;if(e.key==='ArrowLeft')au.currentTime-=5});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target===document.body){e.preventDefault();playBtn.click()}});
+// lightbox
+const lb=document.getElementById('lb'),lbs=document.getElementById('lbScroll'),cv=document.getElementById('canvas');
+function openLb(){lb.hidden=false;requestAnimationFrame(()=>{let cx=.55,cy=.6;if(curSpot){const r=SPOTS[curSpot].r;cx=r[0]+r[2]/2;cy=r[1]+r[3]/2}
+  lbs.scrollLeft=cx*lbs.scrollWidth-lbs.clientWidth/2;lbs.scrollTop=cy*lbs.scrollHeight-lbs.clientHeight/2})}
+cv.addEventListener('click',openLb);cv.addEventListener('keydown',e=>{if(e.key==='Enter'){openLb()}});
+document.getElementById('lbClose').onclick=()=>{lb.hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.hidden=true});
+tick();
+</script>
+
+</body>
+</html>
